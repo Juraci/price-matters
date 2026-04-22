@@ -5,12 +5,13 @@ const SAMPLE_CSV = `Link >,PLANILHA,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,
 Empresa,Código,Atuação,Quantidade total de ações ,Valor de mercado,Lucro líquido estimado,P/L projetado,P/L médio (últ. 10 anos),Desvio do P/L da sua média,CAGR lucros (últ. 5 anos),Dívida líquida/EBITDA,Lucro por ação estimado,Payout esperado,Dividendo por ação bruto projetado,Dividend Yield bruto estimado,Cotação atual,Preço Teto,Margem de segurança,Frequência nos anúncios,Meses que costumam anunciar dividendos,Última atualização
 TestCo,TEST3,Tecnologia,"100.000,00","R$ 1.000.000,00","R$ 100.000,00","10,0","8,0","25,0%","5,0%","0,50","R$ 1,00","50,00%","R$ 0,50","5,0%","R$ 10,00","R$ 12,00",17%,Anual,dezembro,01/01/2026
-AnotherCo,ANOT4,Bancos,"200.000,00","R$ 2.000.000,00","R$ 200.000,00","8,0","7,0","-10,0%","10,0%","1,00","R$ 2,00","60,00%","R$ 1,20","6,0%","R$ 20,00","R$ 22,00",9%,Semestral,junho e dez,01/01/2026`
+AnotherCo,ANOT4,Bancos,"200.000,00","R$ 2.000.000,00","R$ 200.000,00","8,0","7,0","-10,0%","10,0%","1,00","R$ 2,00","60,00%","R$ 1,20","6,0%","R$ 20,00","R$ 22,00",9%,Semestral,junho e dez,01/01/2026
+ThirdCo,THRD5,Papel,"300.000,00","R$ 3.000.000,00","R$ 300.000,00","12,0","10,0","30,0%","8,0%","2,00","R$ 3,00","70,00%","R$ 2,10","7,0%","R$ 30,00","R$ 35,00",14%,Trimestral,"fev, mai, ago, nov",01/01/2026`
 
 describe('parseCsv', () => {
   it('skips metadata and blank lines, parses data rows', () => {
     const rows = parseCsv(SAMPLE_CSV, 'import-1', 'test.csv', '2026-01-01T00:00:00.000Z')
-    expect(rows).toHaveLength(2)
+    expect(rows).toHaveLength(3)
   })
 
   it('parses empresa and codigo correctly', () => {
@@ -51,9 +52,14 @@ describe('parseCsv', () => {
     expect(rows[0]!.snapshot.importedAt).toBe('2026-01-01T00:00:00.000Z')
   })
 
-  it('parses quoted field containing comma (frequencia anuncios is unquoted)', () => {
+  it('unquoted fields after quoted fields parse correctly', () => {
     const rows = parseCsv(SAMPLE_CSV, 'import-1', 'test.csv', '2026-01-01T00:00:00.000Z')
     expect(rows[0]!.snapshot.frequenciaAnuncios).toBe('Anual')
+  })
+
+  it('preserves quoted multi-comma field (mesesAnunciosDividendos)', () => {
+    const rows = parseCsv(SAMPLE_CSV, 'import-1', 'test.csv', '2026-01-01T00:00:00.000Z')
+    expect(rows[2]!.snapshot.mesesAnunciosDividendos).toBe('fev, mai, ago, nov')
   })
 
   it('throws when header row is not found', () => {

@@ -15,6 +15,8 @@ function parseBRPercent(str: string): number {
 }
 
 function parseCsvLine(line: string): string[] {
+  // Note: does not handle RFC 4180 doubled-quote escaping ("" for a literal ")
+  // The production CSV never contains embedded quotes, so this is acceptable.
   const result: string[] = []
   let current = ''
   let inQuotes = false
