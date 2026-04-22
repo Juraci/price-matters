@@ -9,6 +9,12 @@ export function slugify(nome: string): string {
     .replace(/[^a-z0-9-]/g, '')
 }
 
+// Fields intentionally excluded from change detection:
+// - cotacaoAtual: daily price noise, changes every market session
+// - importId, importedAt, filename: import metadata, not business data
+// - atuacao, quantidadeTotalAcoes, plMedio10Anos, desvioPLMedia,
+//   frequenciaAnuncios, mesesAnunciosDividendos, ultimaAtualizacao:
+//   slowly-changing dimensions; excluded to reduce snapshot churn
 const VOLATILE_FIELDS: (keyof TickerSnapshot)[] = [
   'precoTeto',
   'margemSeguranca',

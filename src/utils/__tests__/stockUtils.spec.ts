@@ -40,7 +40,7 @@ describe('slugify', () => {
   })
 
   it('strips non-alphanumeric characters', () => {
-    expect(slugify('BB Seguridade')).toBe('bb-seguridade')
+    expect(slugify('Banco S.A.')).toBe('banco-sa')
   })
 
   it('same slug for same name across calls', () => {
