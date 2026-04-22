@@ -10,6 +10,7 @@ export const useImportStore = defineStore(
   () => {
     const batches = ref<ImportBatch[]>([])
 
+    // Throws if the CSV content has no valid header row (propagated from parseCsv).
     async function importCsv(file: File): Promise<ImportBatch> {
       const content = await file.text()
       const importId = crypto.randomUUID()
@@ -54,6 +55,7 @@ export const useImportStore = defineStore(
       return batch
     }
 
+    // Only clears import batches. Callers must also call empresaStore.reset() and tickerStore.reset().
     function reset(): void {
       batches.value = []
     }

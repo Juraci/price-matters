@@ -91,6 +91,7 @@ describe('useImportStore', () => {
 
     expect(importStore.batches[1]!.stats.updatedTickers).toBe(0)
     expect(tickerStore.tickers['TEST3']!.history).toHaveLength(1)
+    expect(importStore.batches[1]!.stats.unchangedTickers).toBe(3)
   })
 
   it('reset clears all batches', async () => {
