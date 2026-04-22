@@ -27,6 +27,7 @@ async function handleFileChange(event: Event) {
 
   importing.value = true
   errorMessage.value = ''
+  lastBatch.value = null
   try {
     lastBatch.value = await importStore.importCsv(file)
   } catch (err) {
