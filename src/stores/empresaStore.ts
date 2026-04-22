@@ -14,12 +14,14 @@ export const useEmpresaStore = defineStore(
         empresas.value[id] = {
           id,
           nome,
-          codigos: [],
+          codigos: [codigo],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }
+        return
       }
       const empresa = empresas.value[id]!
+      // O(n) scan is acceptable: companies typically have 1-4 stock codes
       if (!empresa.codigos.includes(codigo)) {
         empresa.codigos.push(codigo)
         empresa.updatedAt = new Date().toISOString()
