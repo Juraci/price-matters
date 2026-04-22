@@ -112,6 +112,15 @@ describe('useTickerStore', () => {
     expect(store.getLatestSnapshot('TEST3')?.precoTeto).toBe(15)
   })
 
+  it('activeTickers excludes removed tickers', () => {
+    const store = useTickerStore()
+    store.upsertTicker('TEST3', 'TestCo', makeSnapshot())
+    store.upsertTicker('ANOT4', 'AnotherCo', makeSnapshot())
+    store.markRemovedIfNotIn(new Set(['TEST3']))
+    expect(store.activeTickers).toHaveLength(1)
+    expect(store.activeTickers[0]!.codigo).toBe('TEST3')
+  })
+
   it('reset clears all tickers', () => {
     const store = useTickerStore()
     store.upsertTicker('TEST3', 'TestCo', makeSnapshot())
