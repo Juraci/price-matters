@@ -47,58 +47,48 @@ function handleReset() {
 </script>
 
 <template>
-  <div class="csv-import flex flex-col gap-3">
-    <div class="flex gap-2 align-items-center">
-      <input
-        ref="fileInputRef"
-        type="file"
-        accept=".csv"
-        style="display: none"
-        @change="handleFileChange"
-      />
-      <Button
-        data-testid="import-button"
-        label="Importar CSV"
-        icon="pi pi-upload"
-        :loading="importing"
-        @click="fileInputRef?.click()"
-      />
-      <Button
-        v-if="hasData"
-        data-testid="reset-button"
-        label="Limpar dados"
-        icon="pi pi-trash"
-        severity="danger"
-        outlined
-        @click="handleReset"
-      />
+  <div class="csv-import">
+    <div class="controls">
+      <input ref="fileInputRef" type="file" accept=".csv" style="display: none" @change="handleFileChange" />
+      <Button data-testid="import-button" label="Importar CSV" icon="pi pi-upload" :loading="importing"
+        @click="fileInputRef?.click()" />
+      <Button v-if="hasData" data-testid="reset-button" label="Limpar dados" icon="pi pi-trash" severity="danger"
+        outlined @click="handleReset" />
     </div>
 
-    <div
-      v-if="lastBatch"
-      data-testid="import-success"
-      class="flex gap-2 align-items-center flex-wrap"
-    >
+    <div v-if="lastBatch" data-testid="import-success" class="import-success">
       <Tag severity="success" value="Importado com sucesso" />
       <span class="text-sm text-color-secondary">{{ lastBatch.filename }}</span>
       <Tag :value="`${lastBatch.stats.newTickers} novos`" severity="info" />
-      <Tag
-        v-if="lastBatch.stats.updatedTickers > 0"
-        :value="`${lastBatch.stats.updatedTickers} atualizados`"
-        severity="warn"
-      />
-      <Tag
-        v-if="lastBatch.stats.removedTickers > 0"
-        :value="`${lastBatch.stats.removedTickers} removidos`"
-        severity="danger"
-      />
-      <Tag
-        v-if="lastBatch.stats.unchangedTickers > 0"
-        :value="`${lastBatch.stats.unchangedTickers} sem alteração`"
-        severity="secondary"
-      />
+      <Tag v-if="lastBatch.stats.updatedTickers > 0" :value="`${lastBatch.stats.updatedTickers} atualizados`"
+        severity="warn" />
+      <Tag v-if="lastBatch.stats.removedTickers > 0" :value="`${lastBatch.stats.removedTickers} removidos`"
+        severity="danger" />
+      <Tag v-if="lastBatch.stats.unchangedTickers > 0" :value="`${lastBatch.stats.unchangedTickers} sem alteração`"
+        severity="secondary" />
     </div>
 
     <Message v-if="errorMessage" severity="error">{{ errorMessage }}</Message>
   </div>
 </template>
+
+<style scoped>
+.csv-import {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controls {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.import-success {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+</style>

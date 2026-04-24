@@ -1,6 +1,6 @@
 // e2e/csvImport.spec.ts
-// The file input in CsvImport.vue has display:none (hidden behind a Button),
-// so all setInputFiles calls need { force: true } to bypass visibility checks.
+// The file input in CsvImport.vue has display:none (hidden behind a Button).
+// setInputFiles works on hidden inputs without needing force.
 import { test, expect } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -13,36 +13,36 @@ test.describe('CSV Stock Import', () => {
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await expect(page.getByTestId('import-button')).toBeVisible()
   })
 
-  test('imports CSV and displays data grouped by empresa', async ({ page }) => {
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+  test('imports CSV and displays data with empresa and ticker columns', async ({ page }) => {
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
 
     await expect(page.getByTestId('import-success')).toBeVisible()
-    await expect(page.getByText('Klabin')).toBeVisible()
+    await expect(page.getByText('Klabin').first()).toBeVisible()
     await expect(page.getByText('KLBN11')).toBeVisible()
     await expect(page.getByText('KLBN4')).toBeVisible()
     await expect(page.getByText('KLBN3')).toBeVisible()
   })
 
-  test('all tickers of one empresa appear under its group header', async ({ page }) => {
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+  test('all tickers of one empresa show the empresa name in their row', async ({ page }) => {
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
 
     await expect(page.getByTestId('import-success')).toBeVisible()
 
-    const klabinGroup = page.getByText('Klabin')
-    await expect(klabinGroup).toBeVisible()
-    await expect(page.getByText('KLBN11')).toBeVisible()
-    await expect(page.getByText('KLBN4')).toBeVisible()
-    await expect(page.getByText('KLBN3')).toBeVisible()
+    const table = page.locator('[data-testid="stock-table"]')
+    const klabinRows = table.locator('tr').filter({ hasText: 'Klabin' })
+    await expect(klabinRows.filter({ hasText: 'KLBN11' })).toBeVisible()
+    await expect(klabinRows.filter({ hasText: 'KLBN4' })).toBeVisible()
+    await expect(klabinRows.filter({ hasText: 'KLBN3' })).toBeVisible()
   })
 
   test('importing same CSV twice does not create duplicate snapshots', async ({ page }) => {
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
     await expect(page.getByTestId('import-success')).toBeVisible()
 
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
     await expect(page.getByTestId('import-success')).toBeVisible()
     await expect(page.getByText('sem alteração')).toBeVisible()
 
@@ -56,7 +56,7 @@ test.describe('CSV Stock Import', () => {
   })
 
   test('opens ticker history dialog with snapshot data', async ({ page }) => {
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
     await expect(page.getByTestId('import-success')).toBeVisible()
 
     await page.getByTestId('history-button').first().click()
@@ -68,7 +68,7 @@ test.describe('CSV Stock Import', () => {
   })
 
   test('importing updated CSV adds a new snapshot and shows updated count', async ({ page }) => {
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
     await expect(page.getByTestId('import-success')).toBeVisible()
 
     const fs = await import('node:fs/promises')
@@ -87,13 +87,13 @@ test.describe('CSV Stock Import', () => {
   })
 
   test('reset button clears all data', async ({ page }) => {
-    await page.locator('input[type="file"]').setInputFiles(CSV_PATH, { force: true })
+    await page.locator('input[type="file"]').setInputFiles(CSV_PATH)
     await expect(page.getByTestId('import-success')).toBeVisible()
     await expect(page.getByText('KLBN11')).toBeVisible()
 
     await page.getByTestId('reset-button').click()
 
     await expect(page.getByText('Nenhum dado importado')).toBeVisible()
-    await expect(page.getByTestId('reset-button')).not.toBeVisible()
+    await expect(page.getByTestId('reset-button')).toBeHidden()
   })
 })

@@ -5,9 +5,24 @@ import StockDataTable from '@/components/StockDataTable.vue'
 </script>
 
 <template>
-  <main class="p-4 flex flex-col gap-4">
-    <h1 class="text-2xl font-bold m-0">Price Matters</h1>
+  <main class="home-view">
+    <h1 class="home-title">Price Matters</h1>
     <CsvImport />
     <StockDataTable />
   </main>
 </template>
+
+<style scoped>
+.home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.home-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+</style>

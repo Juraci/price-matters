@@ -64,7 +64,7 @@ describe('StockDataTable', () => {
     expect(wrapper.text()).not.toContain('Nenhum dado importado')
   })
 
-  it('displays ticker codes in the table', async () => {
+  it('displays ticker codes and empresa names as columns', async () => {
     const tickerStore = useTickerStore()
     tickerStore.upsertTicker('KLBN11', 'Klabin', makeSnapshot())
     tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot())
@@ -72,5 +72,6 @@ describe('StockDataTable', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('KLBN11')
     expect(wrapper.text()).toContain('KLBN4')
+    expect(wrapper.text()).toContain('Klabin')
   })
 })

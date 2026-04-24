@@ -80,7 +80,7 @@ function openHistory(ticker: Ticker) {
 }
 
 function rowClass(row: TableRow) {
-  return row.status === 'removed' ? 'opacity-50' : ''
+  return row.status === 'removed' ? 'removed-row' : ''
 }
 
 function formatBRL(value: number): string {
@@ -90,35 +90,18 @@ function formatBRL(value: number): string {
 
 <template>
   <div data-testid="stock-table">
-    <div v-if="tableRows.length === 0" class="text-center p-5 text-color-secondary">
+    <div v-if="tableRows.length === 0" class="empty-state">
       Nenhum dado importado. Use o botão acima para importar um arquivo CSV.
     </div>
 
-    <DataTable
-      v-else
-      :value="tableRows"
-      rowGroupMode="subheader"
-      groupRowsBy="empresaNome"
-      sortMode="single"
-      sortField="empresaNome"
-      :sortOrder="1"
-      scrollable
-      scrollHeight="600px"
-      :rowClass="rowClass"
-      size="small"
-      stripedRows
-    >
-      <template #groupheader="{ data }">
-        <span class="font-bold mr-2">{{ data.empresaNome }}</span>
-      </template>
-
+    <DataTable v-else :value="tableRows" rowGroupMode="subheader" sortMode="single" sortField="empresaNome"
+      :showGridlines="true" :sortOrder="1" scrollable :rowClass="rowClass" size="small" stripedRows>
+      <Column field="empresaNome" header="Empresa" frozen style="min-width: 90px; font-weight: 600" />
       <Column field="codigo" header="Código" frozen style="min-width: 90px; font-weight: 600" />
       <Column field="status" header="Status" style="min-width: 100px">
         <template #body="{ data }">
-          <Tag
-            :value="data.status === 'active' ? 'Ativo' : 'Removido'"
-            :severity="data.status === 'active' ? 'success' : 'danger'"
-          />
+          <Tag :value="data.status === 'active' ? 'Ativo' : 'Removido'"
+            :severity="data.status === 'active' ? 'success' : 'danger'" />
         </template>
       </Column>
       <Column field="atuacao" header="Setor" sortable style="min-width: 160px" />
@@ -166,15 +149,8 @@ function formatBRL(value: number): string {
       <Column field="ultimaAtualizacao" header="Atualizado em" style="min-width: 130px" />
       <Column header="Histórico" style="min-width: 100px">
         <template #body="{ data }">
-          <Button
-            icon="pi pi-history"
-            text
-            size="small"
-            :badge="String(data.historyCount)"
-            aria-label="Histórico"
-            data-testid="history-button"
-            @click="openHistory(data.ticker)"
-          />
+          <Button icon="pi pi-history" text size="small" :badge="String(data.historyCount)" aria-label="Histórico"
+            data-testid="history-button" @click="openHistory(data.ticker)" />
         </template>
       </Column>
     </DataTable>
@@ -182,3 +158,15 @@ function formatBRL(value: number): string {
     <TickerHistoryDialog v-model:visible="historyVisible" :ticker="selectedTicker" />
   </div>
 </template>
+
+<style scoped>
+.empty-state {
+  text-align: center;
+  padding: 1.25rem;
+  color: var(--p-text-muted-color);
+}
+
+:deep(.removed-row) {
+  opacity: 0.5;
+}
+</style>
