@@ -68,7 +68,6 @@ export function parseCsv(
         dividaLiquidaEbitda: parseBRNumber(cols[10] ?? '0'),
         payoutEsperado: parseBRPercent(cols[12] ?? '0'),
         dividendYieldBruto: parseBRPercent(cols[14] ?? '0'),
-        cotacaoAtual: parseBRCurrency(cols[15] ?? '0'),
         precoTeto: parseBRCurrency(cols[16] ?? '0'),
         frequenciaAnuncios: cols[18]?.trim() ?? '',
         mesesAnunciosDividendos: cols[19]?.trim() ?? '',
@@ -78,6 +77,7 @@ export function parseCsv(
       return {
         empresa: cols[0]?.trim() ?? '',
         codigo: cols[1]?.trim() ?? '',
+        cotacaoAtual: parseBRCurrency(cols[15] ?? '0'),
         snapshot,
       }
     })

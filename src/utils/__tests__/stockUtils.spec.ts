@@ -16,7 +16,6 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     dividaLiquidaEbitda: 0.5,
     payoutEsperado: 50,
     dividendYieldBruto: 5,
-    cotacaoAtual: 10,
     precoTeto: 12,
     frequenciaAnuncios: 'Anual',
     mesesAnunciosDividendos: 'dezembro',
@@ -55,12 +54,6 @@ describe('snapshotsDiffer', () => {
     expect(snapshotsDiffer(a, b)).toBe(true)
   })
 
-  it('returns false when only cotacaoAtual differs (daily price noise)', () => {
-    const a = makeSnapshot({ cotacaoAtual: 10 })
-    const b = makeSnapshot({ cotacaoAtual: 11 })
-    expect(snapshotsDiffer(a, b)).toBe(false)
-  })
-
   it('returns true when dividendYieldBruto differs', () => {
     const a = makeSnapshot({ dividendYieldBruto: 5 })
     const b = makeSnapshot({ dividendYieldBruto: 6 })
@@ -76,18 +69,22 @@ describe('snapshotsDiffer', () => {
 
 describe('computeDerived', () => {
   it('margemSeguranca = (1 - cotacao/precoTeto) * 100', () => {
-    const d = computeDerived(makeSnapshot({ cotacaoAtual: 62.21, precoTeto: 81 }))
+    const d = computeDerived(makeSnapshot({ precoTeto: 81 }), 62.21)
     expect(d.margemSeguranca).toBeCloseTo(23.1975, 3)
   })
 
   it('lucroPorAcaoEstimado = lucro / quantidade', () => {
-    const d = computeDerived(makeSnapshot({ lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }))
+    const d = computeDerived(
+      makeSnapshot({ lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
+      10,
+    )
     expect(d.lucroPorAcaoEstimado).toBe(2)
   })
 
   it('plProjetado = cotacao / lpa', () => {
     const d = computeDerived(
-      makeSnapshot({ cotacaoAtual: 20, lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
+      makeSnapshot({ lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
+      20,
     )
     expect(d.plProjetado).toBe(10)
   })
@@ -95,22 +92,23 @@ describe('computeDerived', () => {
   it('dividendoPorAcaoBruto = (payout/100) * lpa', () => {
     const d = computeDerived(
       makeSnapshot({ payoutEsperado: 50, lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
+      10,
     )
     expect(d.dividendoPorAcaoBruto).toBe(1)
   })
 
   it('valorDeMercado = quantidade * cotacao', () => {
-    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 1000, cotacaoAtual: 25 }))
+    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 1000 }), 25)
     expect(d.valorDeMercado).toBe(25000)
   })
 
   it('returns 0 for margemSeguranca when precoTeto is 0', () => {
-    const d = computeDerived(makeSnapshot({ precoTeto: 0, cotacaoAtual: 10 }))
+    const d = computeDerived(makeSnapshot({ precoTeto: 0 }), 10)
     expect(d.margemSeguranca).toBe(0)
   })
 
   it('returns 0 for lucroPorAcaoEstimado and plProjetado when quantidadeTotalAcoes is 0', () => {
-    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 0, lucroLiquidoEstimado: 100 }))
+    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 0, lucroLiquidoEstimado: 100 }), 10)
     expect(d.lucroPorAcaoEstimado).toBe(0)
     expect(d.plProjetado).toBe(0)
   })

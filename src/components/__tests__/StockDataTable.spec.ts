@@ -21,7 +21,6 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     dividaLiquidaEbitda: 0.5,
     payoutEsperado: 50,
     dividendYieldBruto: 5,
-    cotacaoAtual: 10,
     precoTeto: 12,
     frequenciaAnuncios: 'Anual',
     mesesAnunciosDividendos: 'dezembro',
@@ -53,7 +52,7 @@ describe('StockDataTable', () => {
 
   it('shows the table when tickers are present', async () => {
     const tickerStore = useTickerStore()
-    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot())
+    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10)
     const wrapper = mountComponent()
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).not.toContain('Nenhum dado importado')
@@ -61,8 +60,8 @@ describe('StockDataTable', () => {
 
   it('displays ticker codes and empresa names as columns', async () => {
     const tickerStore = useTickerStore()
-    tickerStore.upsertTicker('KLBN11', 'Klabin', makeSnapshot())
-    tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot())
+    tickerStore.upsertTicker('KLBN11', 'Klabin', makeSnapshot(), 10)
+    tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot(), 10)
     const wrapper = mountComponent()
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('KLBN11')

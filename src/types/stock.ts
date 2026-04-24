@@ -13,7 +13,6 @@ export interface TickerSnapshot {
   dividaLiquidaEbitda: number
   payoutEsperado: number
   dividendYieldBruto: number
-  cotacaoAtual: number
   precoTeto: number
   frequenciaAnuncios: string
   mesesAnunciosDividendos: string
@@ -35,6 +34,8 @@ export interface Ticker {
   empresaNome: string
   status: TickerStatus
   history: TickerSnapshot[]
+  cotacaoAtual?: number
+  cotacaoFetchedAt?: string
 }
 
 export interface Empresa {
@@ -62,5 +63,6 @@ export interface ImportBatch {
 export interface ParsedCsvRow {
   empresa: string
   codigo: string
+  cotacaoAtual: number
   snapshot: TickerSnapshot
 }

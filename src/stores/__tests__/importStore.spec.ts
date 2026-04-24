@@ -78,13 +78,24 @@ describe('useImportStore', () => {
     expect(tickerStore.tickers['TEST3']!.history).toHaveLength(2)
   })
 
-  it('does not add snapshot when only cotacaoAtual changes', async () => {
+  it('CSV cotacaoAtual seeds ticker.cotacaoAtual on first import but does not change snapshots', async () => {
+    const importStore = useImportStore()
+    const tickerStore = useTickerStore()
+    const file = new File([BASE_CSV], 'test.csv', { type: 'text/csv' })
+    await importStore.importCsv(file)
+    expect(tickerStore.tickers['TEST3']!.cotacaoAtual).toBe(10)
+    expect(tickerStore.tickers['TEST3']!.history).toHaveLength(1)
+  })
+
+  it('re-importing with a different CSV cotacaoAtual does not add a snapshot and does not clobber live price', async () => {
     const importStore = useImportStore()
     const tickerStore = useTickerStore()
     const file1 = new File([BASE_CSV], 'test1.csv', { type: 'text/csv' })
     await importStore.importCsv(file1)
 
-    // Change cotacaoAtual for TEST3 (R$ 10,00 → R$ 11,00)
+    tickerStore.setLiveQuote('TEST3', 42.5, '2026-04-24T10:00:00.000Z')
+
+    // Change cotacaoAtual for TEST3 in the CSV (R$ 10,00 → R$ 11,00)
     const csv2 = BASE_CSV.replace('"R$ 10,00"', '"R$ 11,00"')
     const file2 = new File([csv2], 'test2.csv', { type: 'text/csv' })
     await importStore.importCsv(file2)
@@ -92,6 +103,7 @@ describe('useImportStore', () => {
     expect(importStore.batches[1]!.stats.updatedTickers).toBe(0)
     expect(tickerStore.tickers['TEST3']!.history).toHaveLength(1)
     expect(importStore.batches[1]!.stats.unchangedTickers).toBe(3)
+    expect(tickerStore.tickers['TEST3']!.cotacaoAtual).toBe(42.5)
   })
 
   it('reset clears all batches', async () => {

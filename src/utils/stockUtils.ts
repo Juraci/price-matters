@@ -10,7 +10,6 @@ export function slugify(nome: string): string {
 }
 
 // Fields intentionally excluded from change detection:
-// - cotacaoAtual: daily price noise, changes every market session
 // - importId, importedAt, filename: import metadata, not business data
 // - atuacao, quantidadeTotalAcoes, plMedio10Anos, desvioPLMedia,
 //   frequenciaAnuncios, mesesAnunciosDividendos, ultimaAtualizacao:
@@ -28,9 +27,8 @@ export function snapshotsDiffer(a: TickerSnapshot, b: TickerSnapshot): boolean {
   return VOLATILE_FIELDS.some((field) => a[field] !== b[field])
 }
 
-export function computeDerived(snapshot: TickerSnapshot): DerivedMetrics {
-  const { cotacaoAtual, precoTeto, lucroLiquidoEstimado, quantidadeTotalAcoes, payoutEsperado } =
-    snapshot
+export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): DerivedMetrics {
+  const { precoTeto, lucroLiquidoEstimado, quantidadeTotalAcoes, payoutEsperado } = snapshot
 
   const lucroPorAcaoEstimado =
     quantidadeTotalAcoes === 0 ? 0 : lucroLiquidoEstimado / quantidadeTotalAcoes

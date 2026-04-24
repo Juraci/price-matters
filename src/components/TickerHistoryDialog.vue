@@ -4,7 +4,6 @@ import Dialog from 'primevue/dialog'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import type { Ticker, TickerSnapshot } from '@/types/stock'
-import { computeDerived } from '@/utils/stockUtils'
 
 const props = defineProps<{
   visible: boolean
@@ -17,27 +16,20 @@ interface HistoryRow {
   importedAt: string
   filename: string
   precoTeto: number
-  margemSeguranca: number
   dividendYieldBruto: number
-  plProjetado: number
   lucroLiquidoEstimado: number
   snapshot: TickerSnapshot
 }
 
 const historyRows = computed<HistoryRow[]>(() =>
-  (props.ticker?.history ?? []).map((snap) => {
-    const derived = computeDerived(snap)
-    return {
-      importedAt: snap.importedAt,
-      filename: snap.filename,
-      precoTeto: snap.precoTeto,
-      margemSeguranca: derived.margemSeguranca,
-      dividendYieldBruto: snap.dividendYieldBruto,
-      plProjetado: derived.plProjetado,
-      lucroLiquidoEstimado: snap.lucroLiquidoEstimado,
-      snapshot: snap,
-    }
-  }),
+  (props.ticker?.history ?? []).map((snap) => ({
+    importedAt: snap.importedAt,
+    filename: snap.filename,
+    precoTeto: snap.precoTeto,
+    dividendYieldBruto: snap.dividendYieldBruto,
+    lucroLiquidoEstimado: snap.lucroLiquidoEstimado,
+    snapshot: snap,
+  })),
 )
 
 function formatDate(iso: string): string {
@@ -72,14 +64,8 @@ function formatBRL(value: number): string {
       <Column field="precoTeto" header="Preço Teto" style="min-width: 110px">
         <template #body="{ data }">{{ formatBRL(data.precoTeto) }}</template>
       </Column>
-      <Column field="margemSeguranca" header="Margem (%)" style="min-width: 110px">
-        <template #body="{ data }">{{ data.margemSeguranca.toFixed(1) }}%</template>
-      </Column>
       <Column field="dividendYieldBruto" header="DY (%)" style="min-width: 90px">
         <template #body="{ data }">{{ data.dividendYieldBruto }}%</template>
-      </Column>
-      <Column field="plProjetado" header="P/L" style="min-width: 80px">
-        <template #body="{ data }">{{ data.plProjetado.toFixed(1) }}</template>
       </Column>
       <Column field="lucroLiquidoEstimado" header="Lucro Líq." style="min-width: 140px">
         <template #body="{ data }">{{ formatBRL(data.lucroLiquidoEstimado) }}</template>

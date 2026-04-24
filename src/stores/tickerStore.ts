@@ -12,14 +12,24 @@ export const useTickerStore = defineStore(
       codigo: string,
       empresaNome: string,
       snapshot: TickerSnapshot,
+      cotacaoAtualFromCsv: number,
     ): 'new' | 'updated' | 'unchanged' {
       if (!tickers.value[codigo]) {
-        tickers.value[codigo] = { codigo, empresaNome, status: 'active', history: [snapshot] }
+        tickers.value[codigo] = {
+          codigo,
+          empresaNome,
+          status: 'active',
+          history: [snapshot],
+          cotacaoAtual: cotacaoAtualFromCsv,
+        }
         return 'new'
       }
 
       const ticker = tickers.value[codigo]!
       ticker.status = 'active'
+
+      // Seed from CSV only if we have no live quote yet.
+      if (ticker.cotacaoAtual === undefined) ticker.cotacaoAtual = cotacaoAtualFromCsv
 
       const last = ticker.history[ticker.history.length - 1]
       if (last && snapshotsDiffer(last, snapshot)) {
@@ -28,6 +38,13 @@ export const useTickerStore = defineStore(
       }
 
       return 'unchanged'
+    }
+
+    function setLiveQuote(codigo: string, price: number, fetchedAt: string): void {
+      const ticker = tickers.value[codigo]
+      if (!ticker) return
+      ticker.cotacaoAtual = price
+      ticker.cotacaoFetchedAt = fetchedAt
     }
 
     function markRemovedIfNotIn(currentCodigos: Set<string>): number {
@@ -47,8 +64,10 @@ export const useTickerStore = defineStore(
     }
 
     function getDerived(codigo: string): DerivedMetrics | undefined {
-      const snap = getLatestSnapshot(codigo)
-      return snap ? computeDerived(snap) : undefined
+      const ticker = tickers.value[codigo]
+      const snap = ticker?.history[ticker.history.length - 1]
+      if (!snap || !ticker) return undefined
+      return computeDerived(snap, ticker.cotacaoAtual ?? 0)
     }
 
     const allTickers = computed(() => Object.values(tickers.value))
@@ -61,6 +80,7 @@ export const useTickerStore = defineStore(
     return {
       tickers,
       upsertTicker,
+      setLiveQuote,
       markRemovedIfNotIn,
       getLatestSnapshot,
       getDerived,

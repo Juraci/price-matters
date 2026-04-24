@@ -11,6 +11,7 @@ const mockTicker: Ticker = {
   codigo: 'KLBN11',
   empresaNome: 'Klabin',
   status: 'active',
+  cotacaoAtual: 18.76,
   history: [
     {
       importId: 'import-1',
@@ -25,7 +26,6 @@ const mockTicker: Ticker = {
       dividaLiquidaEbitda: 3.7,
       payoutEsperado: 15,
       dividendYieldBruto: 5.1,
-      cotacaoAtual: 18.76,
       precoTeto: 22,
       frequenciaAnuncios: 'Trimestral',
       mesesAnunciosDividendos: 'fev, mai, ago, nov',

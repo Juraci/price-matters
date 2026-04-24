@@ -35,7 +35,12 @@ export const useImportStore = defineStore(
         empresaStore.ensureEmpresa(row.empresa, row.codigo)
 
         importedCodigos.add(row.codigo)
-        const result = tickerStore.upsertTicker(row.codigo, row.empresa, row.snapshot)
+        const result = tickerStore.upsertTicker(
+          row.codigo,
+          row.empresa,
+          row.snapshot,
+          row.cotacaoAtual,
+        )
 
         if (result === 'new') stats.newTickers++
         else if (result === 'updated') stats.updatedTickers++

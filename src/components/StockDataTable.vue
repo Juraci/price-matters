@@ -4,11 +4,29 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import MultiSelect from 'primevue/multiselect'
 import { useTickerStore } from '@/stores/tickerStore'
+import {
+  useConfigStore,
+  STOCK_TOGGLEABLE_COLUMNS,
+  type StockToggleableColumn,
+} from '@/stores/configStore'
+import { useLiveQuotes } from '@/composables/useLiveQuotes'
+import LiveQuotesControls from './LiveQuotesControls.vue'
 import TickerHistoryDialog from './TickerHistoryDialog.vue'
 import type { Ticker } from '@/types/stock'
 
 const tickerStore = useTickerStore()
+const configStore = useConfigStore()
+const { lastFetchedAt, isFetching, lastError, refresh } = useLiveQuotes()
+
+const selectedColumns = computed<StockToggleableColumn[]>({
+  get: () =>
+    STOCK_TOGGLEABLE_COLUMNS.filter((c) =>
+      configStore.stockTableVisibleColumns.includes(c.field),
+    ),
+  set: (cols) => configStore.setStockTableVisibleColumns(cols.map((c) => c.field)),
+})
 
 const historyVisible = ref(false)
 const selectedTicker = ref<Ticker | null>(null)
@@ -63,7 +81,7 @@ const tableRows = computed<TableRow[]>(() =>
         payoutEsperado: snap?.payoutEsperado ?? 0,
         dividendoPorAcaoBruto: derived?.dividendoPorAcaoBruto ?? 0,
         dividendYieldBruto: snap?.dividendYieldBruto ?? 0,
-        cotacaoAtual: snap?.cotacaoAtual ?? 0,
+        cotacaoAtual: ticker.cotacaoAtual ?? 0,
         precoTeto: snap?.precoTeto ?? 0,
         margemSeguranca: derived?.margemSeguranca ?? 0,
         frequenciaAnuncios: snap?.frequenciaAnuncios ?? '',
@@ -97,15 +115,26 @@ function formatBRL(value: number): string {
 
     <DataTable v-else :value="tableRows" rowGroupMode="subheader" sortMode="single" sortField="empresaNome"
       :showGridlines="true" :sortOrder="1" scrollable :rowClass="rowClass" size="small" stripedRows>
-      <Column field="empresaNome" header="Empresa" frozen style="min-width: 90px; font-weight: 600" />
+      <template #header>
+        <div class="table-header">
+          <MultiSelect v-model="selectedColumns" :options="STOCK_TOGGLEABLE_COLUMNS" optionLabel="header"
+            display="chip" placeholder="Selecionar colunas" data-testid="column-toggle" />
+          <LiveQuotesControls :last-fetched-at="lastFetchedAt" :is-fetching="isFetching" :last-error="lastError"
+            @refresh="refresh" />
+        </div>
+      </template>
+      <Column v-if="configStore.isStockColumnVisible('empresaNome')" field="empresaNome" header="Empresa" frozen
+        style="min-width: 90px; font-weight: 600" />
       <Column field="codigo" header="Código" frozen style="min-width: 90px; font-weight: 600" />
-      <Column field="status" header="Status" style="min-width: 100px">
+      <Column v-if="configStore.isStockColumnVisible('status')" field="status" header="Status"
+        style="min-width: 100px">
         <template #body="{ data }">
           <Tag :value="data.status === 'active' ? 'Ativo' : 'Removido'"
             :severity="data.status === 'active' ? 'success' : 'danger'" />
         </template>
       </Column>
-      <Column field="atuacao" header="Setor" sortable style="min-width: 160px" />
+      <Column v-if="configStore.isStockColumnVisible('atuacao')" field="atuacao" header="Setor" sortable
+        style="min-width: 160px" />
       <Column field="cotacaoAtual" header="Cotação" sortable style="min-width: 110px">
         <template #body="{ data }">{{ formatBRL(data.cotacaoAtual) }}</template>
       </Column>
@@ -115,41 +144,56 @@ function formatBRL(value: number): string {
       <Column field="margemSeguranca" header="Margem (%)" sortable style="min-width: 110px">
         <template #body="{ data }">{{ data.margemSeguranca.toFixed(1) }}%</template>
       </Column>
-      <Column field="dividendYieldBruto" header="DY (%)" sortable style="min-width: 90px">
+      <Column v-if="configStore.isStockColumnVisible('dividendYieldBruto')" field="dividendYieldBruto"
+        header="DY (%)" sortable style="min-width: 90px">
         <template #body="{ data }">{{ data.dividendYieldBruto }}%</template>
       </Column>
-      <Column field="plProjetado" header="P/L Proj." sortable style="min-width: 90px">
+      <Column v-if="configStore.isStockColumnVisible('plProjetado')" field="plProjetado" header="P/L Proj."
+        sortable style="min-width: 90px">
         <template #body="{ data }">{{ data.plProjetado.toFixed(1) }}</template>
       </Column>
-      <Column field="plMedio10Anos" header="P/L Médio" sortable style="min-width: 100px" />
-      <Column field="desvioPLMedia" header="Desvio P/L" sortable style="min-width: 110px">
+      <Column v-if="configStore.isStockColumnVisible('plMedio10Anos')" field="plMedio10Anos" header="P/L Médio"
+        sortable style="min-width: 100px" />
+      <Column v-if="configStore.isStockColumnVisible('desvioPLMedia')" field="desvioPLMedia" header="Desvio P/L"
+        sortable style="min-width: 110px">
         <template #body="{ data }">{{ data.desvioPLMedia }}%</template>
       </Column>
-      <Column field="cagrLucros5Anos" header="CAGR 5a" sortable style="min-width: 100px">
+      <Column v-if="configStore.isStockColumnVisible('cagrLucros5Anos')" field="cagrLucros5Anos" header="CAGR 5a"
+        sortable style="min-width: 100px">
         <template #body="{ data }">{{ data.cagrLucros5Anos }}%</template>
       </Column>
-      <Column field="dividaLiquidaEbitda" header="Dívida/EBITDA" sortable style="min-width: 130px" />
-      <Column field="lucroLiquidoEstimado" header="Lucro Líq." sortable style="min-width: 140px">
+      <Column v-if="configStore.isStockColumnVisible('dividaLiquidaEbitda')" field="dividaLiquidaEbitda"
+        header="Dívida/EBITDA" sortable style="min-width: 130px" />
+      <Column v-if="configStore.isStockColumnVisible('lucroLiquidoEstimado')" field="lucroLiquidoEstimado"
+        header="Lucro Líq." sortable style="min-width: 140px">
         <template #body="{ data }">{{ formatBRL(data.lucroLiquidoEstimado) }}</template>
       </Column>
-      <Column field="lucroPorAcaoEstimado" header="LPA" sortable style="min-width: 90px">
+      <Column v-if="configStore.isStockColumnVisible('lucroPorAcaoEstimado')" field="lucroPorAcaoEstimado"
+        header="LPA" sortable style="min-width: 90px">
         <template #body="{ data }">{{ formatBRL(data.lucroPorAcaoEstimado) }}</template>
       </Column>
-      <Column field="payoutEsperado" header="Payout" sortable style="min-width: 90px">
+      <Column v-if="configStore.isStockColumnVisible('payoutEsperado')" field="payoutEsperado" header="Payout"
+        sortable style="min-width: 90px">
         <template #body="{ data }">{{ data.payoutEsperado }}%</template>
       </Column>
-      <Column field="dividendoPorAcaoBruto" header="DPA Bruto" sortable style="min-width: 110px">
+      <Column v-if="configStore.isStockColumnVisible('dividendoPorAcaoBruto')" field="dividendoPorAcaoBruto"
+        header="DPA Bruto" sortable style="min-width: 110px">
         <template #body="{ data }">{{ formatBRL(data.dividendoPorAcaoBruto) }}</template>
       </Column>
-      <Column field="valorDeMercado" header="Valor Mercado" sortable style="min-width: 150px">
+      <Column v-if="configStore.isStockColumnVisible('valorDeMercado')" field="valorDeMercado"
+        header="Valor Mercado" sortable style="min-width: 150px">
         <template #body="{ data }">{{ formatBRL(data.valorDeMercado) }}</template>
       </Column>
-      <Column field="quantidadeTotalAcoes" header="Qtd. Ações" sortable style="min-width: 130px">
+      <Column v-if="configStore.isStockColumnVisible('quantidadeTotalAcoes')" field="quantidadeTotalAcoes"
+        header="Qtd. Ações" sortable style="min-width: 130px">
         <template #body="{ data }">{{ data.quantidadeTotalAcoes.toLocaleString('pt-BR') }}</template>
       </Column>
-      <Column field="frequenciaAnuncios" header="Frequência" style="min-width: 120px" />
-      <Column field="mesesAnunciosDividendos" header="Meses" style="min-width: 180px" />
-      <Column field="ultimaAtualizacao" header="Atualizado em" style="min-width: 130px" />
+      <Column v-if="configStore.isStockColumnVisible('frequenciaAnuncios')" field="frequenciaAnuncios"
+        header="Frequência" style="min-width: 120px" />
+      <Column v-if="configStore.isStockColumnVisible('mesesAnunciosDividendos')" field="mesesAnunciosDividendos"
+        header="Meses" style="min-width: 180px" />
+      <Column v-if="configStore.isStockColumnVisible('ultimaAtualizacao')" field="ultimaAtualizacao"
+        header="Atualizado em" style="min-width: 130px" />
       <Column header="Histórico" style="min-width: 100px">
         <template #body="{ data }">
           <Button icon="pi pi-history" text size="small" :badge="String(data.historyCount)" aria-label="Histórico"
@@ -167,6 +211,14 @@ function formatBRL(value: number): string {
   text-align: center;
   padding: 1.25rem;
   color: var(--p-text-muted-color);
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 :deep(.removed-row) {
