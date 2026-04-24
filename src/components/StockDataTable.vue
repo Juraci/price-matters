@@ -105,6 +105,20 @@ function rowClass(row: TableRow) {
 function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
+
+// Fades from transparent at 0% to full color at ±50%, clamped beyond.
+// +50% → #63d196 (green), -50% → #e57b72 (red).
+function margemBgColor(margem: number): string {
+  if (margem > 0) {
+    const t = Math.min(margem / 50, 1)
+    return `rgba(99, 209, 150, ${t})`
+  }
+  if (margem < 0) {
+    const t = Math.min(-margem / 50, 1)
+    return `rgba(229, 123, 114, ${t})`
+  }
+  return 'transparent'
+}
 </script>
 
 <template>
@@ -141,8 +155,13 @@ function formatBRL(value: number): string {
       <Column field="precoTeto" header="Preço Teto" sortable style="min-width: 110px">
         <template #body="{ data }">{{ formatBRL(data.precoTeto) }}</template>
       </Column>
-      <Column field="margemSeguranca" header="Margem (%)" sortable style="min-width: 110px">
-        <template #body="{ data }">{{ data.margemSeguranca.toFixed(1) }}%</template>
+      <Column field="margemSeguranca" header="Margem (%)" sortable style="min-width: 110px"
+        bodyClass="margem-cell-td">
+        <template #body="{ data }">
+          <div class="margem-cell" :style="{ backgroundColor: margemBgColor(data.margemSeguranca) }">
+            {{ data.margemSeguranca.toFixed(1) }}%
+          </div>
+        </template>
       </Column>
       <Column v-if="configStore.isStockColumnVisible('dividendYieldBruto')" field="dividendYieldBruto"
         header="DY (%)" sortable style="min-width: 90px">
@@ -223,5 +242,16 @@ function formatBRL(value: number): string {
 
 :deep(.removed-row) {
   opacity: 0.5;
+}
+
+:deep(td.margem-cell-td) {
+  padding: 0;
+}
+
+.margem-cell {
+  width: 100%;
+  height: 100%;
+  padding: 0.375rem 0.5rem;
+  box-sizing: border-box;
 }
 </style>
