@@ -1,4 +1,4 @@
-import type { TickerSnapshot } from '@/types/stock'
+import type { DerivedMetrics, TickerSnapshot } from '@/types/stock'
 
 export function slugify(nome: string): string {
   return nome
@@ -17,18 +17,33 @@ export function slugify(nome: string): string {
 //   slowly-changing dimensions; excluded to reduce snapshot churn
 const VOLATILE_FIELDS: (keyof TickerSnapshot)[] = [
   'precoTeto',
-  'margemSeguranca',
   'dividendYieldBruto',
   'lucroLiquidoEstimado',
-  'plProjetado',
   'dividaLiquidaEbitda',
-  'lucroPorAcaoEstimado',
-  'dividendoPorAcaoBruto',
   'payoutEsperado',
-  'valorDeMercado',
   'cagrLucros5Anos',
 ]
 
 export function snapshotsDiffer(a: TickerSnapshot, b: TickerSnapshot): boolean {
   return VOLATILE_FIELDS.some((field) => a[field] !== b[field])
+}
+
+export function computeDerived(snapshot: TickerSnapshot): DerivedMetrics {
+  const { cotacaoAtual, precoTeto, lucroLiquidoEstimado, quantidadeTotalAcoes, payoutEsperado } =
+    snapshot
+
+  const lucroPorAcaoEstimado =
+    quantidadeTotalAcoes === 0 ? 0 : lucroLiquidoEstimado / quantidadeTotalAcoes
+  const margemSeguranca = precoTeto === 0 ? 0 : (1 - cotacaoAtual / precoTeto) * 100
+  const plProjetado = lucroPorAcaoEstimado === 0 ? 0 : cotacaoAtual / lucroPorAcaoEstimado
+  const dividendoPorAcaoBruto = (payoutEsperado / 100) * lucroPorAcaoEstimado
+  const valorDeMercado = quantidadeTotalAcoes * cotacaoAtual
+
+  return {
+    margemSeguranca,
+    lucroPorAcaoEstimado,
+    plProjetado,
+    dividendoPorAcaoBruto,
+    valorDeMercado,
+  }
 }

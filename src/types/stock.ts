@@ -6,23 +6,26 @@ export interface TickerSnapshot {
   filename: string
   atuacao: string
   quantidadeTotalAcoes: number
-  valorDeMercado: number
   lucroLiquidoEstimado: number
-  plProjetado: number
   plMedio10Anos: number
   desvioPLMedia: number
   cagrLucros5Anos: number
   dividaLiquidaEbitda: number
-  lucroPorAcaoEstimado: number
   payoutEsperado: number
-  dividendoPorAcaoBruto: number
   dividendYieldBruto: number
   cotacaoAtual: number
   precoTeto: number
-  margemSeguranca: number
   frequenciaAnuncios: string
   mesesAnunciosDividendos: string
   ultimaAtualizacao: string
+}
+
+export interface DerivedMetrics {
+  margemSeguranca: number
+  lucroPorAcaoEstimado: number
+  plProjetado: number
+  dividendoPorAcaoBruto: number
+  valorDeMercado: number
 }
 
 export type TickerStatus = 'active' | 'removed'

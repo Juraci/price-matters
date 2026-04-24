@@ -44,6 +44,7 @@ const tableRows = computed<TableRow[]>(() =>
   tickerStore.allTickers
     .map((ticker) => {
       const snap = tickerStore.getLatestSnapshot(ticker.codigo)
+      const derived = tickerStore.getDerived(ticker.codigo)
       return {
         empresaNome: ticker.empresaNome,
         codigo: ticker.codigo,
@@ -51,20 +52,20 @@ const tableRows = computed<TableRow[]>(() =>
         ticker,
         atuacao: snap?.atuacao ?? '',
         quantidadeTotalAcoes: snap?.quantidadeTotalAcoes ?? 0,
-        valorDeMercado: snap?.valorDeMercado ?? 0,
+        valorDeMercado: derived?.valorDeMercado ?? 0,
         lucroLiquidoEstimado: snap?.lucroLiquidoEstimado ?? 0,
-        plProjetado: snap?.plProjetado ?? 0,
+        plProjetado: derived?.plProjetado ?? 0,
         plMedio10Anos: snap?.plMedio10Anos ?? 0,
         desvioPLMedia: snap?.desvioPLMedia ?? 0,
         cagrLucros5Anos: snap?.cagrLucros5Anos ?? 0,
         dividaLiquidaEbitda: snap?.dividaLiquidaEbitda ?? 0,
-        lucroPorAcaoEstimado: snap?.lucroPorAcaoEstimado ?? 0,
+        lucroPorAcaoEstimado: derived?.lucroPorAcaoEstimado ?? 0,
         payoutEsperado: snap?.payoutEsperado ?? 0,
-        dividendoPorAcaoBruto: snap?.dividendoPorAcaoBruto ?? 0,
+        dividendoPorAcaoBruto: derived?.dividendoPorAcaoBruto ?? 0,
         dividendYieldBruto: snap?.dividendYieldBruto ?? 0,
         cotacaoAtual: snap?.cotacaoAtual ?? 0,
         precoTeto: snap?.precoTeto ?? 0,
-        margemSeguranca: snap?.margemSeguranca ?? 0,
+        margemSeguranca: derived?.margemSeguranca ?? 0,
         frequenciaAnuncios: snap?.frequenciaAnuncios ?? '',
         mesesAnunciosDividendos: snap?.mesesAnunciosDividendos ?? '',
         ultimaAtualizacao: snap?.ultimaAtualizacao ?? '',
@@ -112,12 +113,14 @@ function formatBRL(value: number): string {
         <template #body="{ data }">{{ formatBRL(data.precoTeto) }}</template>
       </Column>
       <Column field="margemSeguranca" header="Margem (%)" sortable style="min-width: 110px">
-        <template #body="{ data }">{{ data.margemSeguranca }}%</template>
+        <template #body="{ data }">{{ data.margemSeguranca.toFixed(1) }}%</template>
       </Column>
       <Column field="dividendYieldBruto" header="DY (%)" sortable style="min-width: 90px">
         <template #body="{ data }">{{ data.dividendYieldBruto }}%</template>
       </Column>
-      <Column field="plProjetado" header="P/L Proj." sortable style="min-width: 90px" />
+      <Column field="plProjetado" header="P/L Proj." sortable style="min-width: 90px">
+        <template #body="{ data }">{{ data.plProjetado.toFixed(1) }}</template>
+      </Column>
       <Column field="plMedio10Anos" header="P/L Médio" sortable style="min-width: 100px" />
       <Column field="desvioPLMedia" header="Desvio P/L" sortable style="min-width: 110px">
         <template #body="{ data }">{{ data.desvioPLMedia }}%</template>

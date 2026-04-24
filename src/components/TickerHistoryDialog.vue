@@ -1,15 +1,44 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import Dialog from 'primevue/dialog'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import type { Ticker } from '@/types/stock'
+import type { Ticker, TickerSnapshot } from '@/types/stock'
+import { computeDerived } from '@/utils/stockUtils'
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
   ticker: Ticker | null
 }>()
 
 defineEmits<{ 'update:visible': [value: boolean] }>()
+
+interface HistoryRow {
+  importedAt: string
+  filename: string
+  precoTeto: number
+  margemSeguranca: number
+  dividendYieldBruto: number
+  plProjetado: number
+  lucroLiquidoEstimado: number
+  snapshot: TickerSnapshot
+}
+
+const historyRows = computed<HistoryRow[]>(() =>
+  (props.ticker?.history ?? []).map((snap) => {
+    const derived = computeDerived(snap)
+    return {
+      importedAt: snap.importedAt,
+      filename: snap.filename,
+      precoTeto: snap.precoTeto,
+      margemSeguranca: derived.margemSeguranca,
+      dividendYieldBruto: snap.dividendYieldBruto,
+      plProjetado: derived.plProjetado,
+      lucroLiquidoEstimado: snap.lucroLiquidoEstimado,
+      snapshot: snap,
+    }
+  }),
+)
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', {
@@ -35,24 +64,23 @@ function formatBRL(value: number): string {
     :style="{ width: '80vw' }"
     @update:visible="$emit('update:visible', $event)"
   >
-    <DataTable :value="ticker?.history ?? []" scrollable scrollHeight="400px" size="small">
+    <DataTable :value="historyRows" scrollable scrollHeight="400px" size="small">
       <Column field="importedAt" header="Importado em" style="min-width: 160px">
         <template #body="{ data }">{{ formatDate(data.importedAt) }}</template>
       </Column>
       <Column field="filename" header="Arquivo" style="min-width: 140px" />
-      <Column field="cotacaoAtual" header="Cotação" style="min-width: 110px">
-        <template #body="{ data }">{{ formatBRL(data.cotacaoAtual) }}</template>
-      </Column>
       <Column field="precoTeto" header="Preço Teto" style="min-width: 110px">
         <template #body="{ data }">{{ formatBRL(data.precoTeto) }}</template>
       </Column>
       <Column field="margemSeguranca" header="Margem (%)" style="min-width: 110px">
-        <template #body="{ data }">{{ data.margemSeguranca }}%</template>
+        <template #body="{ data }">{{ data.margemSeguranca.toFixed(1) }}%</template>
       </Column>
       <Column field="dividendYieldBruto" header="DY (%)" style="min-width: 90px">
         <template #body="{ data }">{{ data.dividendYieldBruto }}%</template>
       </Column>
-      <Column field="plProjetado" header="P/L" style="min-width: 80px" />
+      <Column field="plProjetado" header="P/L" style="min-width: 80px">
+        <template #body="{ data }">{{ data.plProjetado.toFixed(1) }}</template>
+      </Column>
       <Column field="lucroLiquidoEstimado" header="Lucro Líq." style="min-width: 140px">
         <template #body="{ data }">{{ formatBRL(data.lucroLiquidoEstimado) }}</template>
       </Column>

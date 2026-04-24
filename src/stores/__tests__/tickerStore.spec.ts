@@ -10,20 +10,15 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     filename: 'test.csv',
     atuacao: 'Tecnologia',
     quantidadeTotalAcoes: 100000,
-    valorDeMercado: 1000000,
     lucroLiquidoEstimado: 100000,
-    plProjetado: 10,
     plMedio10Anos: 8,
     desvioPLMedia: 25,
     cagrLucros5Anos: 5,
     dividaLiquidaEbitda: 0.5,
-    lucroPorAcaoEstimado: 1,
     payoutEsperado: 50,
-    dividendoPorAcaoBruto: 0.5,
     dividendYieldBruto: 5,
     cotacaoAtual: 10,
     precoTeto: 12,
-    margemSeguranca: 17,
     frequenciaAnuncios: 'Anual',
     mesesAnunciosDividendos: 'dezembro',
     ultimaAtualizacao: '01/01/2026',
@@ -126,5 +121,31 @@ describe('useTickerStore', () => {
     store.upsertTicker('TEST3', 'TestCo', makeSnapshot())
     store.reset()
     expect(store.allTickers).toHaveLength(0)
+  })
+
+  it('getDerived returns computed metrics from the latest snapshot', () => {
+    const store = useTickerStore()
+    store.upsertTicker(
+      'TEST3',
+      'TestCo',
+      makeSnapshot({
+        cotacaoAtual: 62.21,
+        precoTeto: 81,
+        lucroLiquidoEstimado: 200000,
+        quantidadeTotalAcoes: 100000,
+        payoutEsperado: 50,
+      }),
+    )
+    const d = store.getDerived('TEST3')!
+    expect(d.lucroPorAcaoEstimado).toBe(2)
+    expect(d.plProjetado).toBeCloseTo(31.105, 3)
+    expect(d.margemSeguranca).toBeCloseTo(23.1975, 3)
+    expect(d.dividendoPorAcaoBruto).toBe(1)
+    expect(d.valorDeMercado).toBe(6221000)
+  })
+
+  it('getDerived returns undefined for unknown ticker', () => {
+    const store = useTickerStore()
+    expect(store.getDerived('MISSING')).toBeUndefined()
   })
 })

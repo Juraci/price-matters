@@ -25,9 +25,9 @@ describe('parseCsv', () => {
     expect(rows[0]!.snapshot.quantidadeTotalAcoes).toBe(100000)
   })
 
-  it('parses BR currency format (valor de mercado)', () => {
+  it('parses BR currency format (lucro líquido estimado)', () => {
     const rows = parseCsv(SAMPLE_CSV, 'import-1', 'test.csv', '2026-01-01T00:00:00.000Z')
-    expect(rows[0]!.snapshot.valorDeMercado).toBe(1000000)
+    expect(rows[0]!.snapshot.lucroLiquidoEstimado).toBe(100000)
   })
 
   it('parses positive percentage (desvio P/L)', () => {
@@ -38,11 +38,6 @@ describe('parseCsv', () => {
   it('parses negative percentage (desvio P/L)', () => {
     const rows = parseCsv(SAMPLE_CSV, 'import-1', 'test.csv', '2026-01-01T00:00:00.000Z')
     expect(rows[1]!.snapshot.desvioPLMedia).toBe(-10)
-  })
-
-  it('parses unquoted percentage (margem de segurança)', () => {
-    const rows = parseCsv(SAMPLE_CSV, 'import-1', 'test.csv', '2026-01-01T00:00:00.000Z')
-    expect(rows[0]!.snapshot.margemSeguranca).toBe(17)
   })
 
   it('attaches importId, filename, importedAt to each snapshot', () => {

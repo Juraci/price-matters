@@ -52,26 +52,24 @@ export function parseCsv(
     .map((line) => {
       const cols = parseCsvLine(line)
 
+      // Columns 4 (valorDeMercado), 6 (plProjetado), 11 (lucroPorAcaoEstimado),
+      // 13 (dividendoPorAcaoBruto), 17 (margemSeguranca) are derived and
+      // recomputed from other inputs; see computeDerived in stockUtils.
       const snapshot: TickerSnapshot = {
         importId,
         importedAt,
         filename,
         atuacao: cols[2]?.trim() ?? '',
         quantidadeTotalAcoes: parseBRNumber(cols[3] ?? '0'),
-        valorDeMercado: parseBRCurrency(cols[4] ?? '0'),
         lucroLiquidoEstimado: parseBRCurrency(cols[5] ?? '0'),
-        plProjetado: parseBRNumber(cols[6] ?? '0'),
         plMedio10Anos: parseBRNumber(cols[7] ?? '0'),
         desvioPLMedia: parseBRPercent(cols[8] ?? '0'),
         cagrLucros5Anos: parseBRPercent(cols[9] ?? '0'),
         dividaLiquidaEbitda: parseBRNumber(cols[10] ?? '0'),
-        lucroPorAcaoEstimado: parseBRCurrency(cols[11] ?? '0'),
         payoutEsperado: parseBRPercent(cols[12] ?? '0'),
-        dividendoPorAcaoBruto: parseBRCurrency(cols[13] ?? '0'),
         dividendYieldBruto: parseBRPercent(cols[14] ?? '0'),
         cotacaoAtual: parseBRCurrency(cols[15] ?? '0'),
         precoTeto: parseBRCurrency(cols[16] ?? '0'),
-        margemSeguranca: parseBRPercent(cols[17] ?? '0'),
         frequenciaAnuncios: cols[18]?.trim() ?? '',
         mesesAnunciosDividendos: cols[19]?.trim() ?? '',
         ultimaAtualizacao: cols[20]?.trim() ?? '',

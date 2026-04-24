@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Ticker, TickerSnapshot } from '@/types/stock'
-import { snapshotsDiffer } from '@/utils/stockUtils'
+import type { DerivedMetrics, Ticker, TickerSnapshot } from '@/types/stock'
+import { computeDerived, snapshotsDiffer } from '@/utils/stockUtils'
 
 export const useTickerStore = defineStore(
   'ticker',
@@ -46,6 +46,11 @@ export const useTickerStore = defineStore(
       return ticker?.history[ticker.history.length - 1]
     }
 
+    function getDerived(codigo: string): DerivedMetrics | undefined {
+      const snap = getLatestSnapshot(codigo)
+      return snap ? computeDerived(snap) : undefined
+    }
+
     const allTickers = computed(() => Object.values(tickers.value))
     const activeTickers = computed(() => allTickers.value.filter((t) => t.status === 'active'))
 
@@ -58,6 +63,7 @@ export const useTickerStore = defineStore(
       upsertTicker,
       markRemovedIfNotIn,
       getLatestSnapshot,
+      getDerived,
       allTickers,
       activeTickers,
       reset,
