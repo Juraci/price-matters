@@ -139,6 +139,24 @@ describe('useTickerStore', () => {
     expect(store.allTickers).toHaveLength(0)
   })
 
+  it('lastFetchedAt defaults to null', () => {
+    const store = useTickerStore()
+    expect(store.lastFetchedAt).toBeNull()
+  })
+
+  it('setLastFetchedAt updates the timestamp', () => {
+    const store = useTickerStore()
+    store.setLastFetchedAt('2026-04-25T10:00:00.000Z')
+    expect(store.lastFetchedAt).toBe('2026-04-25T10:00:00.000Z')
+  })
+
+  it('reset clears lastFetchedAt', () => {
+    const store = useTickerStore()
+    store.setLastFetchedAt('2026-04-25T10:00:00.000Z')
+    store.reset()
+    expect(store.lastFetchedAt).toBeNull()
+  })
+
   it('getDerived returns computed metrics using ticker.cotacaoAtual', () => {
     const store = useTickerStore()
     store.upsertTicker(

@@ -87,6 +87,7 @@ test.describe('Live quotes', () => {
 
     await page.getByTestId('live-quotes-refresh').click()
     await expect(klbn11Row).toContainText('R$ 99,99')
+    await expect(page.getByTestId('live-quotes-status')).toContainText('Atualizado às')
 
     await page.unroute('**/api/quote/**')
     await page.route('**/api/quote/**', async (route) => {
@@ -98,5 +99,6 @@ test.describe('Live quotes', () => {
       .locator('[data-testid="stock-table"] tr')
       .filter({ hasText: 'KLBN11' })
     await expect(klbn11RowAfter).toContainText('R$ 99,99')
+    await expect(page.getByTestId('live-quotes-status')).toContainText('Atualizado às')
   })
 })

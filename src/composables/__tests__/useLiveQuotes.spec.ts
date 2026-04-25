@@ -94,6 +94,7 @@ describe('useLiveQuotes', () => {
     expect(tickerStore.tickers['PETR4']!.cotacaoAtual).toBe(38.5)
     expect(tickerStore.tickers['VALE3']!.cotacaoAtual).toBe(72.1)
     expect(api.lastFetchedAt).not.toBeNull()
+    expect(tickerStore.lastFetchedAt).toBe(api.lastFetchedAt)
   })
 
   it('preserves previous cotacaoAtual for tickers missing from the response', async () => {

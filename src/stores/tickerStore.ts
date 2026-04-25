@@ -7,6 +7,7 @@ export const useTickerStore = defineStore(
   'ticker',
   () => {
     const tickers = ref<Record<string, Ticker>>({})
+    const lastFetchedAt = ref<string | null>(null)
 
     function upsertTicker(
       codigo: string,
@@ -47,6 +48,10 @@ export const useTickerStore = defineStore(
       ticker.cotacaoFetchedAt = fetchedAt
     }
 
+    function setLastFetchedAt(timestamp: string | null): void {
+      lastFetchedAt.value = timestamp
+    }
+
     function markRemovedIfNotIn(currentCodigos: Set<string>): number {
       let count = 0
       for (const ticker of Object.values(tickers.value)) {
@@ -75,12 +80,15 @@ export const useTickerStore = defineStore(
 
     function reset(): void {
       tickers.value = {}
+      lastFetchedAt.value = null
     }
 
     return {
       tickers,
+      lastFetchedAt,
       upsertTicker,
       setLiveQuote,
+      setLastFetchedAt,
       markRemovedIfNotIn,
       getLatestSnapshot,
       getDerived,

@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, toRef } from 'vue'
 import { useTickerStore } from '@/stores/tickerStore'
 import { useConfigStore } from '@/stores/configStore'
 import { fetchQuotes } from '@/services/brapiClient'
@@ -7,7 +7,7 @@ export function useLiveQuotes() {
   const tickerStore = useTickerStore()
   const configStore = useConfigStore()
 
-  const lastFetchedAt = ref<string | null>(null)
+  const lastFetchedAt = toRef(tickerStore, 'lastFetchedAt')
   const isFetching = ref<boolean>(false)
   const lastError = ref<string | null>(null)
 
@@ -26,7 +26,7 @@ export function useLiveQuotes() {
       for (const [codigo, price] of Object.entries(quotes)) {
         tickerStore.setLiveQuote(codigo, price, now)
       }
-      lastFetchedAt.value = now
+      tickerStore.setLastFetchedAt(now)
       lastError.value = null
     } catch (e) {
       lastError.value = e instanceof Error ? e.message : String(e)
