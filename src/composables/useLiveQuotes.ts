@@ -1,17 +1,19 @@
 import { ref } from 'vue'
 import { useTickerStore } from '@/stores/tickerStore'
-import { fetchQuotes, isLiveQuotesConfigured } from '@/services/brapiClient'
+import { useConfigStore } from '@/stores/configStore'
+import { fetchQuotes } from '@/services/brapiClient'
 
 export function useLiveQuotes() {
   const tickerStore = useTickerStore()
+  const configStore = useConfigStore()
 
   const lastFetchedAt = ref<string | null>(null)
   const isFetching = ref<boolean>(false)
   const lastError = ref<string | null>(null)
 
   async function refresh(): Promise<void> {
-    if (!isLiveQuotesConfigured()) {
-      lastError.value = 'VITE_BRAPI_API_KEY is not configured'
+    if (!configStore.isBrapiConfigured) {
+      lastError.value = 'Brapi API key is not configured. Open Settings to add one.'
       return
     }
     const codigos = tickerStore.allTickers.map((t) => t.codigo)
@@ -19,7 +21,7 @@ export function useLiveQuotes() {
 
     isFetching.value = true
     try {
-      const quotes = await fetchQuotes(codigos)
+      const quotes = await fetchQuotes(codigos, configStore.brapiApiKey)
       const now = new Date().toISOString()
       for (const [codigo, price] of Object.entries(quotes)) {
         tickerStore.setLiveQuote(codigo, price, now)

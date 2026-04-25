@@ -32,6 +32,12 @@ function buildResult(symbol: string, price: number) {
 
 test.describe('Live quotes', () => {
   test.beforeEach(async ({ page }) => {
+    // Seed the brapi API key into the persisted configStore so refresh can run.
+    // Runs on every navigation, so it survives the localStorage.clear() + reload below.
+    await page.addInitScript(() => {
+      localStorage.setItem('config', JSON.stringify({ brapiApiKey: 'test-key' }))
+    })
+
     await page.route('**/api/quote/**', async (route) => {
       const url = new URL(route.request().url())
       const symbol = url.pathname.split('/').pop() ?? ''
@@ -44,7 +50,13 @@ test.describe('Live quotes', () => {
     })
 
     await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
+    await page.evaluate(() => {
+      const { brapiApiKey } = JSON.parse(localStorage.getItem('config') ?? '{}')
+      localStorage.clear()
+      if (brapiApiKey) {
+        localStorage.setItem('config', JSON.stringify({ brapiApiKey }))
+      }
+    })
     await page.reload()
     await expect(page.getByTestId('import-button')).toBeVisible()
     await page.locator('input[type="file"]').setInputFiles(CSV_PATH)

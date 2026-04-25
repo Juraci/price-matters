@@ -33,19 +33,29 @@ export const useConfigStore = defineStore(
   'config',
   () => {
     const stockTableVisibleColumns = ref<string[]>([...DEFAULT_VISIBLE])
+    const brapiApiKey = ref<string>('')
 
     const isStockColumnVisible = computed(
       () => (field: string) => stockTableVisibleColumns.value.includes(field),
     )
 
+    const isBrapiConfigured = computed(() => brapiApiKey.value.trim().length > 0)
+
     function setStockTableVisibleColumns(fields: string[]): void {
       stockTableVisibleColumns.value = fields
     }
 
+    function setBrapiApiKey(key: string): void {
+      brapiApiKey.value = key.trim()
+    }
+
     return {
       stockTableVisibleColumns,
+      brapiApiKey,
       isStockColumnVisible,
+      isBrapiConfigured,
       setStockTableVisibleColumns,
+      setBrapiApiKey,
     }
   },
   { persist: true },

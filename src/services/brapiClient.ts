@@ -7,14 +7,8 @@ interface BrapiQuoteResponse {
   results?: BrapiQuoteResult[]
 }
 
-const apiKey = import.meta.env.VITE_BRAPI_API_KEY as string | undefined
-
-export function isLiveQuotesConfigured(): boolean {
-  return Boolean(apiKey)
-}
-
-async function fetchOne(codigo: string): Promise<[string, number] | null> {
-  const params = new URLSearchParams({ interval: '1d', token: apiKey! })
+async function fetchOne(codigo: string, apiKey: string): Promise<[string, number] | null> {
+  const params = new URLSearchParams({ interval: '1d', token: apiKey })
   const url = `https://brapi.dev/api/quote/${codigo}?${params.toString()}`
   const res = await fetch(url)
   if (!res.ok) return null
@@ -24,13 +18,16 @@ async function fetchOne(codigo: string): Promise<[string, number] | null> {
   return [r.symbol, r.regularMarketPrice]
 }
 
-export async function fetchQuotes(codigos: string[]): Promise<Record<string, number>> {
-  if (!apiKey || codigos.length === 0) return {}
+export async function fetchQuotes(
+  codigos: string[],
+  apiKey: string,
+): Promise<Record<string, number>> {
+  if (codigos.length === 0) return {}
 
   // brapi's free tier limits each GET /api/quote to a single ticker, so fan out
   // one request per code. allSettled: a failure on one ticker must not cancel
   // the others — we just skip it and the caller keeps the previous price.
-  const settled = await Promise.allSettled(codigos.map(fetchOne))
+  const settled = await Promise.allSettled(codigos.map((c) => fetchOne(c, apiKey)))
   const out: Record<string, number> = {}
   for (const r of settled) {
     if (r.status === 'fulfilled' && r.value) {

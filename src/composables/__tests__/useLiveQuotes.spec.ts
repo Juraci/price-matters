@@ -3,14 +3,14 @@ import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia, getActivePinia } from 'pinia'
 import { useTickerStore } from '@/stores/tickerStore'
+import { useConfigStore } from '@/stores/configStore'
 import type { TickerSnapshot } from '@/types/stock'
 
-const fetchQuotesMock = vi.fn<(codigos: string[]) => Promise<Record<string, number>>>()
-const isLiveQuotesConfiguredMock = vi.fn<() => boolean>()
+const fetchQuotesMock =
+  vi.fn<(codigos: string[], apiKey: string) => Promise<Record<string, number>>>()
 
 vi.mock('@/services/brapiClient', () => ({
-  fetchQuotes: (codigos: string[]) => fetchQuotesMock(codigos),
-  isLiveQuotesConfigured: () => isLiveQuotesConfiguredMock(),
+  fetchQuotes: (codigos: string[], apiKey: string) => fetchQuotesMock(codigos, apiKey),
 }))
 
 import { useLiveQuotes } from '../useLiveQuotes'
@@ -60,8 +60,7 @@ describe('useLiveQuotes', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     fetchQuotesMock.mockReset()
-    isLiveQuotesConfiguredMock.mockReset()
-    isLiveQuotesConfiguredMock.mockReturnValue(true)
+    useConfigStore().setBrapiApiKey('test-key')
   })
 
   it('does not fetch on mount (manual refresh only)', () => {
@@ -70,15 +69,15 @@ describe('useLiveQuotes', () => {
     expect(fetchQuotesMock).not.toHaveBeenCalled()
   })
 
-  it('sets lastError when brapi is not configured and does not call fetchQuotes', async () => {
-    isLiveQuotesConfiguredMock.mockReturnValue(false)
+  it('sets lastError when brapi key is not configured and does not call fetchQuotes', async () => {
+    useConfigStore().setBrapiApiKey('')
     useTickerStore().upsertTicker('PETR4', 'Petrobras', makeSnapshot(), 30)
 
     const api = mountHost()
     await api.refresh()
 
     expect(fetchQuotesMock).not.toHaveBeenCalled()
-    expect(api.lastError).toMatch(/VITE_BRAPI_API_KEY/)
+    expect(api.lastError).toMatch(/Brapi API key/i)
   })
 
   it('refresh updates cotacaoAtual and lastFetchedAt for returned quotes', async () => {
@@ -91,7 +90,7 @@ describe('useLiveQuotes', () => {
     const api = mountHost()
     await api.refresh()
 
-    expect(fetchQuotesMock).toHaveBeenCalledWith(['PETR4', 'VALE3'])
+    expect(fetchQuotesMock).toHaveBeenCalledWith(['PETR4', 'VALE3'], 'test-key')
     expect(tickerStore.tickers['PETR4']!.cotacaoAtual).toBe(38.5)
     expect(tickerStore.tickers['VALE3']!.cotacaoAtual).toBe(72.1)
     expect(api.lastFetchedAt).not.toBeNull()

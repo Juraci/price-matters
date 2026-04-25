@@ -13,6 +13,7 @@ import {
 } from '@/stores/configStore'
 import { useLiveQuotes } from '@/composables/useLiveQuotes'
 import LiveQuotesControls from './LiveQuotesControls.vue'
+import SettingsPopover from './SettingsPopover.vue'
 import TickerHistoryDialog from './TickerHistoryDialog.vue'
 import type { Ticker } from '@/types/stock'
 
@@ -135,6 +136,7 @@ function margemBgColor(margem: number): string {
             display="chip" placeholder="Selecionar colunas" data-testid="column-toggle" />
           <LiveQuotesControls :last-fetched-at="lastFetchedAt" :is-fetching="isFetching" :last-error="lastError"
             @refresh="refresh" />
+          <SettingsPopover />
         </div>
       </template>
       <Column v-if="configStore.isStockColumnVisible('empresaNome')" field="empresaNome" header="Empresa" frozen

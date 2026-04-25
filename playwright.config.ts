@@ -94,8 +94,5 @@ export default defineConfig({
     command: process.env.CI ? 'npm run preview' : 'npm run dev',
     port: process.env.CI ? 4173 : 5173,
     reuseExistingServer: !process.env.CI,
-    env: {
-      VITE_BRAPI_API_KEY: process.env.VITE_BRAPI_API_KEY ?? 'test-key',
-    },
   },
 })
