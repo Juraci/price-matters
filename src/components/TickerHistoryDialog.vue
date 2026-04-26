@@ -119,8 +119,9 @@ const diffRows = computed<DiffRow[]>(() => {
   const last = history[toIdx.value];
   if (!prev || !last) return [];
   return getDiff(prev, last)
-    .filter((d): d is Extract<ReturnType<typeof getDiff>[number], { type: 'CHANGE' }> =>
-      d.type === 'CHANGE',
+    .filter(
+      (d): d is Extract<ReturnType<typeof getDiff>[number], { type: 'CHANGE' }> =>
+        d.type === 'CHANGE',
     )
     .map((d) => {
       const field = d.path[0] as string;
@@ -145,26 +146,51 @@ const diffRows = computed<DiffRow[]>(() => {
 </script>
 
 <template>
-  <Dialog :visible="visible" :header="`Histórico: ${ticker?.codigo ?? ''}`" data-test-snapshot-history modal maximizable
-    :style="{ width: '80vw' }" @update:visible="$emit('update:visible', $event)">
+  <Dialog
+    :visible="visible"
+    :header="`Histórico: ${ticker?.codigo ?? ''}`"
+    data-test-snapshot-history
+    modal
+    maximizable
+    :style="{ width: '80vw' }"
+    @update:visible="$emit('update:visible', $event)"
+  >
     <div v-if="showPicker" class="diff-controls" data-test-diff-picker>
       <label class="diff-control">
         <span>Anterior</span>
-        <Select v-model="fromIdx" :options="snapshotOptions" optionLabel="label" optionValue="value"
-          data-test-diff-from />
+        <Select
+          v-model="fromIdx"
+          :options="snapshotOptions"
+          optionLabel="label"
+          optionValue="value"
+          data-test-diff-from
+        />
       </label>
       <label class="diff-control">
         <span>Atual</span>
-        <Select v-model="toIdx" :options="snapshotOptions" optionLabel="label" optionValue="value" data-test-diff-to />
+        <Select
+          v-model="toIdx"
+          :options="snapshotOptions"
+          optionLabel="label"
+          optionValue="value"
+          data-test-diff-to
+        />
       </label>
     </div>
-    <DataTable v-if="diffRows.length > 0" :value="diffRows" data-test-snapshot-diff size="small" class="diff-table">
+    <DataTable
+      v-if="diffRows.length > 0"
+      :value="diffRows"
+      data-test-snapshot-diff
+      size="small"
+      class="diff-table"
+    >
       <Column field="label" header="Campo" />
       <Column field="oldValue" header="Anterior" />
       <Column field="newValue" header="Atual">
         <template #body="{ data }">
           <span :class="['diff-new', `diff-${data.tone}`]" :data-test-diff-tone="data.tone">
-            {{ data.newValue }}<span v-if="data.arrow" class="diff-arrow">&nbsp;{{ data.arrow }}</span>
+            {{ data.newValue
+            }}<span v-if="data.arrow" class="diff-arrow">&nbsp;{{ data.arrow }}</span>
           </span>
         </template>
       </Column>
