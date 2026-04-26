@@ -1,11 +1,28 @@
 // src/components/__tests__/TickerHistoryDialog.spec.ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 import TickerHistoryDialog from '../TickerHistoryDialog.vue';
 import type { Ticker } from '@/types/stock';
+
+// PrimeVue Select uses window.matchMedia, which jsdom doesn't implement.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn<(query: string) => MediaQueryList>().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn<() => void>(),
+    removeListener: vi.fn<() => void>(),
+    addEventListener: vi.fn<() => void>(),
+    removeEventListener: vi.fn<() => void>(),
+    dispatchEvent: vi.fn<() => boolean>(),
+  }) as unknown as MediaQueryList),
+});
+
+const NBSP = ' ';
 
 const mockTicker: Ticker = {
   codigo: 'KLBN11',
@@ -116,13 +133,27 @@ describe('TickerHistoryDialog', () => {
 
     const diffTable = document.querySelector('[data-test-snapshot-diff]');
     expect(diffTable).not.toBeNull();
-    const diffText = (diffTable!.textContent ?? '').replace(/ /g, ' ');
+    const diffText = (diffTable!.textContent ?? '').replace(new RegExp(NBSP, 'g'), ' ');
     expect(diffText).toContain('Preço Teto');
     expect(diffText).toContain('R$ 22,00');
     expect(diffText).toContain('R$ 28,00');
     expect(diffText).toContain('Qtd. Ações');
     expect(diffText).toContain('1.244.049.145');
     expect(diffText).toContain('1.244.049.146');
+
+    // precoTeto 22 -> 28: increase, good direction = good tone (green).
+    // quantidadeTotalAcoes increase: bad direction = bad tone (red).
+    const tones = Array.from(diffTable!.querySelectorAll('[data-test-diff-tone]')).map((el) => ({
+      tone: el.getAttribute('data-test-diff-tone'),
+      text: (el.textContent ?? '').replace(new RegExp(NBSP, 'g'), ' '),
+    }));
+    const precoTetoCell = tones.find((t) => t.text.includes('R$ 28,00'));
+    const qtdCell = tones.find((t) => t.text.includes('1.244.049.146'));
+    expect(precoTetoCell?.tone).toBe('good');
+    expect(qtdCell?.tone).toBe('bad');
+
+    // Picker is hidden when there are only 2 snapshots.
+    expect(document.querySelector('[data-test-diff-picker]')).toBeNull();
   });
 
   it('does not render the diff section when only one snapshot exists', async () => {
@@ -134,5 +165,37 @@ describe('TickerHistoryDialog', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     expect(document.querySelector('[data-test-snapshot-diff]')).toBeNull();
+    expect(document.querySelector('[data-test-diff-picker]')).toBeNull();
+  });
+
+  it('renders the snapshot picker and defaults to the last two snapshots when 3+ exist', async () => {
+    const base = mockTicker.history[0]!;
+    const tickerWithThree: Ticker = {
+      ...mockTicker,
+      history: [
+        { ...base, importId: 'i1', filename: 'jan.csv', precoTeto: 22 },
+        { ...base, importId: 'i2', filename: 'feb.csv', precoTeto: 25 },
+        { ...base, importId: 'i3', filename: 'mar.csv', precoTeto: 30 },
+      ],
+    };
+
+    mount(TickerHistoryDialog, {
+      props: { visible: true, ticker: tickerWithThree },
+      global: { plugins: [createPinia(), [PrimeVue, { theme: { preset: Aura } }]] },
+      attachTo: document.body,
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(document.querySelector('[data-test-diff-picker]')).not.toBeNull();
+    expect(document.querySelector('[data-test-diff-from]')).not.toBeNull();
+    expect(document.querySelector('[data-test-diff-to]')).not.toBeNull();
+
+    const diffTable = document.querySelector('[data-test-snapshot-diff]');
+    expect(diffTable).not.toBeNull();
+    // Default is feb.csv (idx 1) -> mar.csv (idx 2), so precoTeto goes 25 -> 30, not 22 -> 30.
+    const diffText = (diffTable!.textContent ?? '').replace(new RegExp(NBSP, 'g'), ' ');
+    expect(diffText).toContain('R$ 25,00');
+    expect(diffText).toContain('R$ 30,00');
+    expect(diffText).not.toContain('R$ 22,00');
   });
 });
