@@ -5,6 +5,9 @@ import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import MultiSelect from 'primevue/multiselect';
+import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
 import { useTickerStore } from '@/stores/tickerStore';
 import {
   useConfigStore,
@@ -26,6 +29,11 @@ const selectedColumns = computed<StockToggleableColumn[]>({
     STOCK_TOGGLEABLE_COLUMNS.filter((c) => configStore.stockTableVisibleColumns.includes(c.field)),
   set: (cols) => configStore.setStockTableVisibleColumns(cols.map((c) => c.field)),
 });
+
+const STATUS_OPTIONS = [
+  { label: 'Ativo', value: 'active' },
+  { label: 'Removido', value: 'removed' },
+];
 
 const historyVisible = ref(false);
 const selectedTicker = ref<Ticker | null>(null);
@@ -58,38 +66,36 @@ interface TableRow {
 }
 
 const tableRows = computed<TableRow[]>(() =>
-  tickerStore.allTickers
-    .map((ticker) => {
-      const snap = tickerStore.getLatestSnapshot(ticker.codigo);
-      const derived = tickerStore.getDerived(ticker.codigo);
-      return {
-        empresaNome: ticker.empresaNome,
-        codigo: ticker.codigo,
-        status: ticker.status,
-        ticker,
-        atuacao: snap?.atuacao ?? '',
-        quantidadeTotalAcoes: snap?.quantidadeTotalAcoes ?? 0,
-        valorDeMercado: derived?.valorDeMercado ?? 0,
-        lucroLiquidoEstimado: snap?.lucroLiquidoEstimado ?? 0,
-        plProjetado: derived?.plProjetado ?? 0,
-        plMedio10Anos: snap?.plMedio10Anos ?? 0,
-        desvioPLMedia: snap?.desvioPLMedia ?? 0,
-        cagrLucros5Anos: snap?.cagrLucros5Anos ?? 0,
-        dividaLiquidaEbitda: snap?.dividaLiquidaEbitda ?? 0,
-        lucroPorAcaoEstimado: derived?.lucroPorAcaoEstimado ?? 0,
-        payoutEsperado: snap?.payoutEsperado ?? 0,
-        dividendoPorAcaoBruto: derived?.dividendoPorAcaoBruto ?? 0,
-        dividendYieldBruto: snap?.dividendYieldBruto ?? 0,
-        cotacaoAtual: ticker.cotacaoAtual ?? 0,
-        precoTeto: snap?.precoTeto ?? 0,
-        margemSeguranca: derived?.margemSeguranca ?? 0,
-        frequenciaAnuncios: snap?.frequenciaAnuncios ?? '',
-        mesesAnunciosDividendos: snap?.mesesAnunciosDividendos ?? '',
-        ultimaAtualizacao: snap?.ultimaAtualizacao ?? '',
-        historyCount: ticker.history.length,
-      };
-    })
-    .sort((a, b) => a.empresaNome.localeCompare(b.empresaNome, 'pt-BR')),
+  tickerStore.allTickers.map((ticker) => {
+    const snap = tickerStore.getLatestSnapshot(ticker.codigo);
+    const derived = tickerStore.getDerived(ticker.codigo);
+    return {
+      empresaNome: ticker.empresaNome,
+      codigo: ticker.codigo,
+      status: ticker.status,
+      ticker,
+      atuacao: snap?.atuacao ?? '',
+      quantidadeTotalAcoes: snap?.quantidadeTotalAcoes ?? 0,
+      valorDeMercado: derived?.valorDeMercado ?? 0,
+      lucroLiquidoEstimado: snap?.lucroLiquidoEstimado ?? 0,
+      plProjetado: derived?.plProjetado ?? 0,
+      plMedio10Anos: snap?.plMedio10Anos ?? 0,
+      desvioPLMedia: snap?.desvioPLMedia ?? 0,
+      cagrLucros5Anos: snap?.cagrLucros5Anos ?? 0,
+      dividaLiquidaEbitda: snap?.dividaLiquidaEbitda ?? 0,
+      lucroPorAcaoEstimado: derived?.lucroPorAcaoEstimado ?? 0,
+      payoutEsperado: snap?.payoutEsperado ?? 0,
+      dividendoPorAcaoBruto: derived?.dividendoPorAcaoBruto ?? 0,
+      dividendYieldBruto: snap?.dividendYieldBruto ?? 0,
+      cotacaoAtual: ticker.cotacaoAtual ?? 0,
+      precoTeto: snap?.precoTeto ?? 0,
+      margemSeguranca: derived?.margemSeguranca ?? 0,
+      frequenciaAnuncios: snap?.frequenciaAnuncios ?? '',
+      mesesAnunciosDividendos: snap?.mesesAnunciosDividendos ?? '',
+      ultimaAtualizacao: snap?.ultimaAtualizacao ?? '',
+      historyCount: ticker.history.length,
+    };
+  }),
 );
 
 function openHistory(ticker: Ticker) {
@@ -124,11 +130,12 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
     <DataTable
       v-else
       :value="tableRows"
-      rowGroupMode="subheader"
+      v-model:sortField="configStore.stockTableSortField"
+      v-model:sortOrder="configStore.stockTableSortOrder"
+      v-model:filters="configStore.stockTableFilters"
+      filterDisplay="menu"
       sortMode="single"
-      sortField="empresaNome"
       :showGridlines="true"
-      :sortOrder="1"
       scrollable
       :rowClass="rowClass"
       size="small"
@@ -158,14 +165,33 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         v-if="configStore.isStockColumnVisible('empresaNome')"
         field="empresaNome"
         header="Empresa"
+        sortable
+        filter
         frozen
         style="min-width: 90px; font-weight: 600"
-      />
-      <Column field="codigo" header="Código" frozen style="min-width: 90px; font-weight: 600" />
+      >
+        <template #filter="{ filterModel }">
+          <InputText v-model="filterModel.value" type="text" />
+        </template>
+      </Column>
+      <Column
+        field="codigo"
+        header="Código"
+        sortable
+        filter
+        frozen
+        style="min-width: 90px; font-weight: 600"
+      >
+        <template #filter="{ filterModel }">
+          <InputText v-model="filterModel.value" type="text" />
+        </template>
+      </Column>
       <Column
         v-if="configStore.isStockColumnVisible('status')"
         field="status"
         header="Status"
+        :showFilterMatchModes="false"
+        filter
         style="min-width: 100px"
       >
         <template #body="{ data }">
@@ -174,24 +200,71 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
             :severity="data.status === 'active' ? 'success' : 'danger'"
           />
         </template>
+        <template #filter="{ filterModel }">
+          <Select
+            v-model="filterModel.value"
+            :options="STATUS_OPTIONS"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Qualquer"
+            showClear
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('atuacao')"
         field="atuacao"
         header="Setor"
         sortable
+        filter
         style="min-width: 160px"
-      />
-      <Column field="cotacaoAtual" header="Cotação" sortable style="min-width: 110px">
-        <template #body="{ data }">{{ formatBRL(data.cotacaoAtual) }}</template>
+      >
+        <template #filter="{ filterModel }">
+          <InputText v-model="filterModel.value" type="text" />
+        </template>
       </Column>
-      <Column field="precoTeto" header="Preço Teto" sortable style="min-width: 110px">
+      <Column
+        field="cotacaoAtual"
+        header="Cotação"
+        sortable
+        filter
+        dataType="numeric"
+        style="min-width: 110px"
+      >
+        <template #body="{ data }">{{ formatBRL(data.cotacaoAtual) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
+      </Column>
+      <Column
+        field="precoTeto"
+        header="Preço Teto"
+        sortable
+        filter
+        dataType="numeric"
+        style="min-width: 110px"
+      >
         <template #body="{ data }">{{ formatBRL(data.precoTeto) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         field="margemSeguranca"
         header="Margem (%)"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 110px"
         bodyClass="ramp-cell-td"
       >
@@ -203,55 +276,116 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
             {{ data.margemSeguranca.toFixed(1) }}%
           </div>
         </template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('dividendYieldBruto')"
         field="dividendYieldBruto"
         header="DY (%)"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 90px"
       >
         <template #body="{ data }">{{ data.dividendYieldBruto }}%</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('plProjetado')"
         field="plProjetado"
         header="P/L Proj."
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 90px"
       >
         <template #body="{ data }">{{ data.plProjetado.toFixed(1) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('plMedio10Anos')"
         field="plMedio10Anos"
         header="P/L Médio"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 100px"
-      />
+      >
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
+      </Column>
       <Column
         v-if="configStore.isStockColumnVisible('desvioPLMedia')"
         field="desvioPLMedia"
         header="Desvio P/L"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 110px"
       >
         <template #body="{ data }">{{ data.desvioPLMedia }}%</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('cagrLucros5Anos')"
         field="cagrLucros5Anos"
         header="CAGR 5a"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 100px"
       >
         <template #body="{ data }">{{ data.cagrLucros5Anos }}%</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('dividaLiquidaEbitda')"
         field="dividaLiquidaEbitda"
         header="Dívida/EBITDA"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 130px"
         bodyClass="ramp-cell-td"
       >
@@ -263,81 +397,159 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
             {{ data.dividaLiquidaEbitda }}
           </div>
         </template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('lucroLiquidoEstimado')"
         field="lucroLiquidoEstimado"
         header="Lucro Líq."
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 140px"
       >
         <template #body="{ data }">{{ formatBRL(data.lucroLiquidoEstimado) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('lucroPorAcaoEstimado')"
         field="lucroPorAcaoEstimado"
         header="LPA"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 90px"
       >
         <template #body="{ data }">{{ formatBRL(data.lucroPorAcaoEstimado) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('payoutEsperado')"
         field="payoutEsperado"
         header="Payout"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 90px"
       >
         <template #body="{ data }">{{ data.payoutEsperado }}%</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('dividendoPorAcaoBruto')"
         field="dividendoPorAcaoBruto"
         header="DPA Bruto"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 110px"
       >
         <template #body="{ data }">{{ formatBRL(data.dividendoPorAcaoBruto) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('valorDeMercado')"
         field="valorDeMercado"
         header="Valor Mercado"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 150px"
       >
         <template #body="{ data }">{{ formatBRL(data.valorDeMercado) }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber
+            v-model="filterModel.value"
+            mode="decimal"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+          />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('quantidadeTotalAcoes')"
         field="quantidadeTotalAcoes"
         header="Qtd. Ações"
         sortable
+        filter
+        dataType="numeric"
         style="min-width: 130px"
       >
         <template #body="{ data }">{{
           data.quantidadeTotalAcoes.toLocaleString('pt-BR')
         }}</template>
+        <template #filter="{ filterModel }">
+          <InputNumber v-model="filterModel.value" mode="decimal" :minFractionDigits="0" />
+        </template>
       </Column>
       <Column
         v-if="configStore.isStockColumnVisible('frequenciaAnuncios')"
         field="frequenciaAnuncios"
         header="Frequência"
+        filter
         style="min-width: 120px"
-      />
+      >
+        <template #filter="{ filterModel }">
+          <InputText v-model="filterModel.value" type="text" />
+        </template>
+      </Column>
       <Column
         v-if="configStore.isStockColumnVisible('mesesAnunciosDividendos')"
         field="mesesAnunciosDividendos"
         header="Meses"
+        filter
         style="min-width: 180px"
-      />
+      >
+        <template #filter="{ filterModel }">
+          <InputText v-model="filterModel.value" type="text" />
+        </template>
+      </Column>
       <Column
         v-if="configStore.isStockColumnVisible('ultimaAtualizacao')"
         field="ultimaAtualizacao"
         header="Atualizado em"
+        filter
         style="min-width: 130px"
-      />
+      >
+        <template #filter="{ filterModel }">
+          <InputText v-model="filterModel.value" type="text" />
+        </template>
+      </Column>
       <Column header="Histórico" style="min-width: 100px">
         <template #body="{ data }">
           <Button

@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { STOCK_TOGGLEABLE_COLUMNS, useConfigStore } from '../configStore';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import {
+  STOCK_FILTERABLE_COLUMNS,
+  STOCK_TOGGLEABLE_COLUMNS,
+  buildDefaultStockTableFilters,
+  useConfigStore,
+} from '../configStore';
 
 describe('useConfigStore', () => {
   beforeEach(() => {
@@ -53,5 +59,66 @@ describe('useConfigStore', () => {
     store.setBrapiApiKey('   ');
     expect(store.brapiApiKey).toBe('');
     expect(store.isBrapiConfigured).toBe(false);
+  });
+
+  it('defaults stockTableSortField/Order to empresaNome ascending', () => {
+    const store = useConfigStore();
+    expect(store.stockTableSortField).toBe('empresaNome');
+    expect(store.stockTableSortOrder).toBe(1);
+  });
+
+  it('setStockTableSort updates both field and order', () => {
+    const store = useConfigStore();
+    store.setStockTableSort('cotacaoAtual', -1);
+    expect(store.stockTableSortField).toBe('cotacaoAtual');
+    expect(store.stockTableSortOrder).toBe(-1);
+    store.setStockTableSort('precoTeto', undefined);
+    expect(store.stockTableSortField).toBe('precoTeto');
+    expect(store.stockTableSortOrder).toBeUndefined();
+  });
+
+  it('builds default filters with one constraint per filterable column', () => {
+    const filters = buildDefaultStockTableFilters();
+    for (const col of STOCK_FILTERABLE_COLUMNS) {
+      const meta = filters[col.field];
+      expect(meta).toBeDefined();
+      const operatorMeta = meta as {
+        operator: string;
+        constraints: Array<{ value: unknown; matchMode: string }>;
+      };
+      expect(operatorMeta.operator).toBe(FilterOperator.AND);
+      expect(operatorMeta.constraints).toHaveLength(1);
+      expect(operatorMeta.constraints[0]?.value).toBeNull();
+      const expectedMode =
+        col.kind === 'numeric'
+          ? FilterMatchMode.GREATER_THAN
+          : col.kind === 'enum'
+            ? FilterMatchMode.EQUALS
+            : FilterMatchMode.STARTS_WITH;
+      expect(operatorMeta.constraints[0]?.matchMode).toBe(expectedMode);
+    }
+  });
+
+  it('store defaults stockTableFilters to the built defaults', () => {
+    const store = useConfigStore();
+    expect(Object.keys(store.stockTableFilters).sort()).toEqual(
+      STOCK_FILTERABLE_COLUMNS.map((c) => c.field).sort(),
+    );
+  });
+
+  it('setStockTableFilters replaces filters; resetStockTableFilters restores defaults', () => {
+    const store = useConfigStore();
+    store.setStockTableFilters({
+      codigo: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: 'PETR', matchMode: FilterMatchMode.STARTS_WITH }],
+      },
+    });
+    expect(Object.keys(store.stockTableFilters)).toEqual(['codigo']);
+
+    store.resetStockTableFilters();
+    expect(Object.keys(store.stockTableFilters).sort()).toEqual(
+      STOCK_FILTERABLE_COLUMNS.map((c) => c.field).sort(),
+    );
   });
 });

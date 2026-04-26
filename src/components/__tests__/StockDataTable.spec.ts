@@ -2,9 +2,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia, getActivePinia } from 'pinia';
 import PrimeVue from 'primevue/config';
+import DataTable from 'primevue/datatable';
 import Aura from '@primeuix/themes/aura';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import StockDataTable from '../StockDataTable.vue';
 import { useTickerStore } from '@/stores/tickerStore';
+import { useConfigStore } from '@/stores/configStore';
 import type { TickerSnapshot } from '@/types/stock';
 
 function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
@@ -67,5 +70,59 @@ describe('StockDataTable', () => {
     expect(wrapper.text()).toContain('KLBN11');
     expect(wrapper.text()).toContain('KLBN4');
     expect(wrapper.text()).toContain('Klabin');
+  });
+
+  it('passes the configStore sort field/order to the DataTable', async () => {
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+    const configStore = useConfigStore();
+    configStore.setStockTableSort('cotacaoAtual', -1);
+
+    const wrapper = mountComponent();
+    await wrapper.vm.$nextTick();
+
+    const dataTable = wrapper.findComponent(DataTable);
+    expect(dataTable.props('sortField')).toBe('cotacaoAtual');
+    expect(dataTable.props('sortOrder')).toBe(-1);
+  });
+
+  it('round-trips sort state from DataTable update events back to the store', async () => {
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+    const configStore = useConfigStore();
+
+    const wrapper = mountComponent();
+    await wrapper.vm.$nextTick();
+
+    const dataTable = wrapper.findComponent(DataTable);
+    dataTable.vm.$emit('update:sortField', 'precoTeto');
+    dataTable.vm.$emit('update:sortOrder', -1);
+    await wrapper.vm.$nextTick();
+
+    expect(configStore.stockTableSortField).toBe('precoTeto');
+    expect(configStore.stockTableSortOrder).toBe(-1);
+  });
+
+  it('passes the configStore filters to the DataTable', async () => {
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+    const configStore = useConfigStore();
+    configStore.setStockTableFilters({
+      codigo: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: 'TEST', matchMode: FilterMatchMode.STARTS_WITH }],
+      },
+    });
+
+    const wrapper = mountComponent();
+    await wrapper.vm.$nextTick();
+
+    const dataTable = wrapper.findComponent(DataTable);
+    expect(dataTable.props('filters')).toEqual({
+      codigo: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: 'TEST', matchMode: FilterMatchMode.STARTS_WITH }],
+      },
+    });
   });
 });

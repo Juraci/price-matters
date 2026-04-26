@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import type { DataTableFilterMeta } from 'primevue/datatable';
 
 export interface StockToggleableColumn {
   field: string;
@@ -29,11 +31,71 @@ export const STOCK_TOGGLEABLE_COLUMNS: StockToggleableColumn[] = [
 
 const DEFAULT_VISIBLE: string[] = STOCK_TOGGLEABLE_COLUMNS.map((c) => c.field);
 
+export type StockFilterKind = 'text' | 'numeric' | 'enum';
+
+export interface StockFilterableColumn {
+  field: string;
+  kind: StockFilterKind;
+}
+
+// Single source of truth for which columns expose a filter and what their default
+// match mode is. Pinned columns (codigo, cotacaoAtual, precoTeto, margemSeguranca)
+// plus every toggleable column are filterable; the Histórico action column is not.
+export const STOCK_FILTERABLE_COLUMNS: StockFilterableColumn[] = [
+  { field: 'empresaNome', kind: 'text' },
+  { field: 'codigo', kind: 'text' },
+  { field: 'status', kind: 'enum' },
+  { field: 'atuacao', kind: 'text' },
+  { field: 'cotacaoAtual', kind: 'numeric' },
+  { field: 'precoTeto', kind: 'numeric' },
+  { field: 'margemSeguranca', kind: 'numeric' },
+  { field: 'dividendYieldBruto', kind: 'numeric' },
+  { field: 'plProjetado', kind: 'numeric' },
+  { field: 'plMedio10Anos', kind: 'numeric' },
+  { field: 'desvioPLMedia', kind: 'numeric' },
+  { field: 'cagrLucros5Anos', kind: 'numeric' },
+  { field: 'dividaLiquidaEbitda', kind: 'numeric' },
+  { field: 'lucroLiquidoEstimado', kind: 'numeric' },
+  { field: 'lucroPorAcaoEstimado', kind: 'numeric' },
+  { field: 'payoutEsperado', kind: 'numeric' },
+  { field: 'dividendoPorAcaoBruto', kind: 'numeric' },
+  { field: 'valorDeMercado', kind: 'numeric' },
+  { field: 'quantidadeTotalAcoes', kind: 'numeric' },
+  { field: 'frequenciaAnuncios', kind: 'text' },
+  { field: 'mesesAnunciosDividendos', kind: 'text' },
+  { field: 'ultimaAtualizacao', kind: 'text' },
+];
+
+function defaultMatchModeFor(kind: StockFilterKind): string {
+  switch (kind) {
+    case 'numeric':
+      return FilterMatchMode.GREATER_THAN;
+    case 'enum':
+      return FilterMatchMode.EQUALS;
+    default:
+      return FilterMatchMode.STARTS_WITH;
+  }
+}
+
+export function buildDefaultStockTableFilters(): DataTableFilterMeta {
+  const filters: DataTableFilterMeta = {};
+  for (const col of STOCK_FILTERABLE_COLUMNS) {
+    filters[col.field] = {
+      operator: FilterOperator.AND,
+      constraints: [{ value: null, matchMode: defaultMatchModeFor(col.kind) }],
+    };
+  }
+  return filters;
+}
+
 export const useConfigStore = defineStore(
   'config',
   () => {
     const stockTableVisibleColumns = ref<string[]>([...DEFAULT_VISIBLE]);
     const brapiApiKey = ref<string>('');
+    const stockTableSortField = ref<string>('empresaNome');
+    const stockTableSortOrder = ref<number | undefined>(1);
+    const stockTableFilters = ref<DataTableFilterMeta>(buildDefaultStockTableFilters());
 
     const isStockColumnVisible = computed(
       () => (field: string) => stockTableVisibleColumns.value.includes(field),
@@ -49,13 +111,32 @@ export const useConfigStore = defineStore(
       brapiApiKey.value = key.trim();
     }
 
+    function setStockTableSort(field: string, order: number | undefined): void {
+      stockTableSortField.value = field;
+      stockTableSortOrder.value = order;
+    }
+
+    function setStockTableFilters(filters: DataTableFilterMeta): void {
+      stockTableFilters.value = filters;
+    }
+
+    function resetStockTableFilters(): void {
+      stockTableFilters.value = buildDefaultStockTableFilters();
+    }
+
     return {
       stockTableVisibleColumns,
       brapiApiKey,
+      stockTableSortField,
+      stockTableSortOrder,
+      stockTableFilters,
       isStockColumnVisible,
       isBrapiConfigured,
       setStockTableVisibleColumns,
       setBrapiApiKey,
+      setStockTableSort,
+      setStockTableFilters,
+      resetStockTableFilters,
     };
   },
   { persist: true },

@@ -54,7 +54,7 @@ Data stores (reset together on "reset" action): `importStore.reset()`, `empresaS
   - `markRemovedIfNotIn()` sets status to `'removed'` for tickers absent from the latest import.
 - **`empresaStore`**: Tracks companies (`Empresa`) and their associated ticker codes. Keyed by slugified company name.
 - **`importStore`**: Records import batches with stats. Orchestrates the CSV import pipeline.
-- **`configStore`**: UI preferences. Holds `stockTableVisibleColumns: string[]` (drives the column toggle) and exports `STOCK_TOGGLEABLE_COLUMNS` — the list of fields that can be toggled. Pinned columns (Código, Cotação, Preço Teto, Margem, Histórico) are not in that list and render unconditionally.
+- **`configStore`**: UI preferences. Holds `stockTableVisibleColumns: string[]` (drives the column toggle) and exports `STOCK_TOGGLEABLE_COLUMNS` — the list of fields that can be toggled. Pinned columns (Código, Cotação, Preço Teto, Margem, Histórico) are not in that list and render unconditionally. Also persists table sort state (`stockTableSortField`, `stockTableSortOrder`) and per-column advanced filter state (`stockTableFilters`); the filterable fields and their default match modes live in `STOCK_FILTERABLE_COLUMNS` + `buildDefaultStockTableFilters()`.
 
 ### Live quotes (brapi.dev)
 
@@ -68,6 +68,7 @@ Data stores (reset together on "reset" action): `importStore.reset()`, `empresaS
 PrimeVue is the only UI library. **PrimeFlex is not installed** — do not use PrimeFlex utility classes (`flex`, `gap-2`, `align-items-center`, etc.). Use scoped CSS in `<style scoped>` blocks instead. For styles targeting PrimeVue-generated elements (e.g., DataTable rows), use `:deep()`.
 
 - **Column toggle** (`StockDataTable.vue`): The table's `#header` slot renders a `MultiSelect` bound to `configStore`. Each toggleable `<Column>` is wrapped in `v-if="configStore.isStockColumnVisible('field')"`. To add a new toggleable column: append `{ field, header }` to `STOCK_TOGGLEABLE_COLUMNS` in `configStore.ts` **and** add the corresponding `<Column v-if="...">` in the template — the two must stay in sync by `field`.
+- **Sort & filters** (`StockDataTable.vue`): The DataTable uses `v-model:sortField` / `v-model:sortOrder` / `v-model:filters` bound to `configStore`, with `filterDisplay="menu"` for the per-column advanced filter popup. Adding a new filterable column requires (a) appending it to `STOCK_FILTERABLE_COLUMNS` in `configStore.ts` with the right `kind` (`text` | `numeric` | `enum`) and (b) marking the `<Column filter ...>` in the template plus a `#filter` slot — `InputText` for text, `InputNumber` for numeric, `Select` for enum. PrimeVue 4's menu-mode filter renders nothing without the slot, so it is mandatory. Filter constants come from `@primevue/core/api` (`FilterMatchMode`, `FilterOperator`).
 - **TickerHistoryDialog** shows snapshot fields only (`precoTeto`, `dividendYieldBruto`, `lucroLiquidoEstimado`). It does **not** show `margemSeguranca` or `plProjetado` because those require `cotacaoAtual`, which is no longer stored historically.
 
 ### Testing conventions
