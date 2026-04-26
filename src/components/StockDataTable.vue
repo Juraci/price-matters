@@ -105,18 +105,13 @@ function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-// Fades from transparent at 0% to full color at ±50%, clamped beyond.
-// +50% → #63d196 (green), -50% → #e57b72 (red).
-function margemBgColor(margem: number): string {
-  if (margem > 0) {
-    const t = Math.min(margem / 50, 1);
-    return `rgba(99, 209, 150, ${t})`;
-  }
-  if (margem < 0) {
-    const t = Math.min(-margem / 50, 1);
-    return `rgba(229, 123, 114, ${t})`;
-  }
-  return 'transparent';
+// Fades from transparent at 0 to full color at ±scale, clamped beyond.
+// Green (#63d196) on the "good" side, red (#e57b72) on the other.
+function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negative'): string {
+  if (value === 0) return 'transparent';
+  const isGood = goodWhen === 'positive' ? value > 0 : value < 0;
+  const t = Math.min(Math.abs(value) / scale, 1);
+  return isGood ? `rgba(99, 209, 150, ${t})` : `rgba(229, 123, 114, ${t})`;
 }
 </script>
 
@@ -138,6 +133,7 @@ function margemBgColor(margem: number): string {
       :rowClass="rowClass"
       size="small"
       stripedRows
+      :rowHover="true"
     >
       <template #header>
         <div class="table-header">
@@ -197,12 +193,12 @@ function margemBgColor(margem: number): string {
         header="Margem (%)"
         sortable
         style="min-width: 110px"
-        bodyClass="margem-cell-td"
+        bodyClass="ramp-cell-td"
       >
         <template #body="{ data }">
           <div
-            class="margem-cell"
-            :style="{ backgroundColor: margemBgColor(data.margemSeguranca) }"
+            class="ramp-cell"
+            :style="{ backgroundColor: rampBgColor(data.margemSeguranca, 50, 'positive') }"
           >
             {{ data.margemSeguranca.toFixed(1) }}%
           </div>
@@ -257,7 +253,17 @@ function margemBgColor(margem: number): string {
         header="Dívida/EBITDA"
         sortable
         style="min-width: 130px"
-      />
+        bodyClass="ramp-cell-td"
+      >
+        <template #body="{ data }">
+          <div
+            class="ramp-cell"
+            :style="{ backgroundColor: rampBgColor(data.dividaLiquidaEbitda, 5, 'negative') }"
+          >
+            {{ data.dividaLiquidaEbitda }}
+          </div>
+        </template>
+      </Column>
       <Column
         v-if="configStore.isStockColumnVisible('lucroLiquidoEstimado')"
         field="lucroLiquidoEstimado"
@@ -370,11 +376,11 @@ function margemBgColor(margem: number): string {
   opacity: 0.5;
 }
 
-:deep(td.margem-cell-td) {
+:deep(td.ramp-cell-td) {
   padding: 0;
 }
 
-.margem-cell {
+.ramp-cell {
   width: 100%;
   height: 100%;
   padding: 0.375rem 0.5rem;
