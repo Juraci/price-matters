@@ -169,7 +169,7 @@ const diffRows = computed<DiffRow[]>(() => {
         </template>
       </Column>
     </DataTable>
-    <Divider class="diff-divider" align="left" type="solid">
+    <Divider v-if="showPicker" class="diff-divider" align="left" type="solid">
       <b>Historico de Importações</b>
     </Divider>
     <DataTable :value="historyRows" scrollable scrollHeight="400px" size="small">
