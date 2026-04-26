@@ -1,4 +1,5 @@
 import type { DerivedMetrics, TickerSnapshot } from '@/types/stock';
+import diff from 'microdiff';
 
 export function slugify(nome: string): string {
   return nome
@@ -11,7 +12,7 @@ export function slugify(nome: string): string {
 
 // Fields intentionally excluded from change detection:
 // - importId, importedAt, filename: import metadata, not business data
-// - atuacao, quantidadeTotalAcoes, plMedio10Anos, desvioPLMedia,
+// - atuacao, plMedio10Anos, desvioPLMedia,
 //   frequenciaAnuncios, mesesAnunciosDividendos, ultimaAtualizacao:
 //   slowly-changing dimensions; excluded to reduce snapshot churn
 const VOLATILE_FIELDS: (keyof TickerSnapshot)[] = [
@@ -21,10 +22,16 @@ const VOLATILE_FIELDS: (keyof TickerSnapshot)[] = [
   'dividaLiquidaEbitda',
   'payoutEsperado',
   'cagrLucros5Anos',
+  'quantidadeTotalAcoes',
 ];
 
 export function snapshotsDiffer(a: TickerSnapshot, b: TickerSnapshot): boolean {
   return VOLATILE_FIELDS.some((field) => a[field] !== b[field]);
+}
+
+export function getDiff(a: TickerSnapshot, b: TickerSnapshot) {
+  const differences = diff(a, b);
+  return differences.filter((d) => VOLATILE_FIELDS.includes(d.path[0] as keyof TickerSnapshot));
 }
 
 export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): DerivedMetrics {

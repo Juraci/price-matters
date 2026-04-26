@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDerived, slugify, snapshotsDiffer } from '../stockUtils';
+import { computeDerived, slugify, snapshotsDiffer, getDiff } from '../stockUtils';
 import type { TickerSnapshot } from '@/types/stock';
 
 function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
@@ -60,10 +60,26 @@ describe('snapshotsDiffer', () => {
     expect(snapshotsDiffer(a, b)).toBe(true);
   });
 
+  it('returns true when quantidadeTotalAcoes differs', () => {
+    const a = makeSnapshot({ quantidadeTotalAcoes: 100000 });
+    const b = makeSnapshot({ quantidadeTotalAcoes: 110000 });
+    expect(snapshotsDiffer(a, b)).toBe(true);
+  });
+
   it('returns false when only importId and importedAt differ (metadata)', () => {
     const a = makeSnapshot({ importId: 'import-1', importedAt: '2026-01-01T00:00:00.000Z' });
     const b = makeSnapshot({ importId: 'import-2', importedAt: '2026-02-01T00:00:00.000Z' });
     expect(snapshotsDiffer(a, b)).toBe(false);
+  });
+});
+
+describe('getDiff', () => {
+  it('returns the differences between two snapshots', () => {
+    const a = makeSnapshot({ quantidadeTotalAcoes: 100000 });
+    const b = makeSnapshot({ quantidadeTotalAcoes: 110000 });
+    expect(getDiff(a, b)).toEqual([
+      { type: 'CHANGE', path: ['quantidadeTotalAcoes'], value: 110000, oldValue: 100000 },
+    ]);
   });
 });
 

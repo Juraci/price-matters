@@ -62,12 +62,38 @@ test.describe('CSV Stock Import', () => {
     await expect(page.getByTestId('import-success')).toBeVisible();
 
     await expect(page.locator('[data-test-history-button]').first()).toHaveText('2');
-    await page.locator('[data-test-history-button]').first().click();
+
+    // KLBN4's precoTeto changed R$ 4,40 -> R$ 4,00 between v1 and v2.
+    const table = page.locator('[data-testid="stock-table"]');
+    const klabnRow = table.locator('tr').filter({ hasText: 'KLBN4' });
+    await klabnRow.locator('[data-test-history-button]').click();
 
     const dialog = page.locator('[data-test-snapshot-history]');
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.p-dialog-header')).toContainText('Histórico:');
-    await expect(dialog.locator('.p-datatable-tbody tr')).toHaveCount(2);
+    await expect(dialog.locator('.p-datatable-tbody tr').first()).toBeVisible();
+
+    const klabnDiff = dialog.locator('[data-test-snapshot-diff]');
+    await expect(klabnDiff).toBeVisible();
+    await expect(klabnDiff).toContainText('Preço Teto');
+    await expect(klabnDiff).toContainText('R$ 4,40');
+    await expect(klabnDiff).toContainText('R$ 4,00');
+    await page.getByLabel('Close').click();
+
+    // Grendene's quantidade total de acoes should differ between the two snapshots.
+    const grendeneRow = table.locator('tr').filter({ hasText: 'Grendene' });
+    await grendeneRow.locator('[data-test-history-button]').click();
+
+    const grendeneSnapshot = page.locator('[data-test-snapshot-history]');
+    await expect(grendeneSnapshot).toBeVisible();
+    await expect(grendeneSnapshot.locator('.p-dialog-header')).toContainText('Histórico:');
+    await expect(grendeneSnapshot.locator('.p-datatable-tbody tr').first()).toBeVisible();
+
+    const grendeneDiff = grendeneSnapshot.locator('[data-test-snapshot-diff]');
+    await expect(grendeneDiff).toBeVisible();
+    await expect(grendeneDiff).toContainText('Qtd. Ações');
+    await expect(grendeneDiff).toContainText('902.160.000');
+    await expect(grendeneDiff).toContainText('905.000.000');
   });
 
   test('importing updated CSV adds a new snapshot and shows updated count', async ({ page }) => {
