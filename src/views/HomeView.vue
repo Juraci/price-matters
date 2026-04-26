@@ -1,7 +1,7 @@
 <!-- src/views/HomeView.vue -->
 <script setup lang="ts">
-import CsvImport from '@/components/CsvImport.vue'
-import StockDataTable from '@/components/StockDataTable.vue'
+import CsvImport from '@/components/CsvImport.vue';
+import StockDataTable from '@/components/StockDataTable.vue';
 </script>
 
 <template>

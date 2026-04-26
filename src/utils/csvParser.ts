@@ -1,39 +1,39 @@
-import type { ParsedCsvRow, TickerSnapshot } from '@/types/stock'
+import type { ParsedCsvRow, TickerSnapshot } from '@/types/stock';
 
 function parseBRNumber(str: string): number {
-  const cleaned = str.trim().replace(/\./g, '').replace(',', '.')
-  const num = parseFloat(cleaned)
-  return isNaN(num) ? 0 : num
+  const cleaned = str.trim().replace(/\./g, '').replace(',', '.');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
 }
 
 function parseBRCurrency(str: string): number {
-  return parseBRNumber(str.replace('R$', '').trim())
+  return parseBRNumber(str.replace('R$', '').trim());
 }
 
 function parseBRPercent(str: string): number {
-  return parseBRNumber(str.replace('%', '').trim())
+  return parseBRNumber(str.replace('%', '').trim());
 }
 
 function parseCsvLine(line: string): string[] {
   // Note: does not handle RFC 4180 doubled-quote escaping ("" for a literal ")
   // The production CSV never contains embedded quotes, so this is acceptable.
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
 
   for (const char of line) {
     if (char === '"') {
-      inQuotes = !inQuotes
+      inQuotes = !inQuotes;
     } else if (char === ',' && !inQuotes) {
-      result.push(current)
-      current = ''
+      result.push(current);
+      current = '';
     } else {
-      current += char
+      current += char;
     }
   }
-  result.push(current)
+  result.push(current);
 
-  return result
+  return result;
 }
 
 export function parseCsv(
@@ -42,15 +42,15 @@ export function parseCsv(
   filename: string,
   importedAt: string,
 ): ParsedCsvRow[] {
-  const lines = content.split('\n')
-  const headerIndex = lines.findIndex((line) => line.trimStart().startsWith('Empresa'))
-  if (headerIndex === -1) throw new Error('CSV header row not found')
+  const lines = content.split('\n');
+  const headerIndex = lines.findIndex((line) => line.trimStart().startsWith('Empresa'));
+  if (headerIndex === -1) throw new Error('CSV header row not found');
 
   return lines
     .slice(headerIndex + 1)
     .filter((line) => line.trim() !== '')
     .map((line) => {
-      const cols = parseCsvLine(line)
+      const cols = parseCsvLine(line);
 
       // Columns 4 (valorDeMercado), 6 (plProjetado), 11 (lucroPorAcaoEstimado),
       // 13 (dividendoPorAcaoBruto), 17 (margemSeguranca) are derived and
@@ -72,14 +72,14 @@ export function parseCsv(
         frequenciaAnuncios: cols[18]?.trim() ?? '',
         mesesAnunciosDividendos: cols[19]?.trim() ?? '',
         ultimaAtualizacao: cols[20]?.trim() ?? '',
-      }
+      };
 
       return {
         empresa: cols[0]?.trim() ?? '',
         codigo: cols[1]?.trim() ?? '',
         cotacaoAtual: parseBRCurrency(cols[15] ?? '0'),
         snapshot,
-      }
+      };
     })
-    .filter((row) => row.empresa !== '' && row.codigo !== '')
+    .filter((row) => row.empresa !== '' && row.codigo !== '');
 }

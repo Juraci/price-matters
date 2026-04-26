@@ -1,13 +1,13 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { DerivedMetrics, Ticker, TickerSnapshot } from '@/types/stock'
-import { computeDerived, snapshotsDiffer } from '@/utils/stockUtils'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { DerivedMetrics, Ticker, TickerSnapshot } from '@/types/stock';
+import { computeDerived, snapshotsDiffer } from '@/utils/stockUtils';
 
 export const useTickerStore = defineStore(
   'ticker',
   () => {
-    const tickers = ref<Record<string, Ticker>>({})
-    const lastFetchedAt = ref<string | null>(null)
+    const tickers = ref<Record<string, Ticker>>({});
+    const lastFetchedAt = ref<string | null>(null);
 
     function upsertTicker(
       codigo: string,
@@ -22,65 +22,65 @@ export const useTickerStore = defineStore(
           status: 'active',
           history: [snapshot],
           cotacaoAtual: cotacaoAtualFromCsv,
-        }
-        return 'new'
+        };
+        return 'new';
       }
 
-      const ticker = tickers.value[codigo]!
-      ticker.status = 'active'
+      const ticker = tickers.value[codigo]!;
+      ticker.status = 'active';
 
       // Seed from CSV only if we have no live quote yet.
-      if (ticker.cotacaoAtual === undefined) ticker.cotacaoAtual = cotacaoAtualFromCsv
+      if (ticker.cotacaoAtual === undefined) ticker.cotacaoAtual = cotacaoAtualFromCsv;
 
-      const last = ticker.history[ticker.history.length - 1]
+      const last = ticker.history[ticker.history.length - 1];
       if (last && snapshotsDiffer(last, snapshot)) {
-        ticker.history.push(snapshot)
-        return 'updated'
+        ticker.history.push(snapshot);
+        return 'updated';
       }
 
-      return 'unchanged'
+      return 'unchanged';
     }
 
     function setLiveQuote(codigo: string, price: number, fetchedAt: string): void {
-      const ticker = tickers.value[codigo]
-      if (!ticker) return
-      ticker.cotacaoAtual = price
-      ticker.cotacaoFetchedAt = fetchedAt
+      const ticker = tickers.value[codigo];
+      if (!ticker) return;
+      ticker.cotacaoAtual = price;
+      ticker.cotacaoFetchedAt = fetchedAt;
     }
 
     function setLastFetchedAt(timestamp: string | null): void {
-      lastFetchedAt.value = timestamp
+      lastFetchedAt.value = timestamp;
     }
 
     function markRemovedIfNotIn(currentCodigos: Set<string>): number {
-      let count = 0
+      let count = 0;
       for (const ticker of Object.values(tickers.value)) {
         if (ticker.status === 'active' && !currentCodigos.has(ticker.codigo)) {
-          ticker.status = 'removed'
-          count++
+          ticker.status = 'removed';
+          count++;
         }
       }
-      return count
+      return count;
     }
 
     function getLatestSnapshot(codigo: string): TickerSnapshot | undefined {
-      const ticker = tickers.value[codigo]
-      return ticker?.history[ticker.history.length - 1]
+      const ticker = tickers.value[codigo];
+      return ticker?.history[ticker.history.length - 1];
     }
 
     function getDerived(codigo: string): DerivedMetrics | undefined {
-      const ticker = tickers.value[codigo]
-      const snap = ticker?.history[ticker.history.length - 1]
-      if (!snap || !ticker) return undefined
-      return computeDerived(snap, ticker.cotacaoAtual ?? 0)
+      const ticker = tickers.value[codigo];
+      const snap = ticker?.history[ticker.history.length - 1];
+      if (!snap || !ticker) return undefined;
+      return computeDerived(snap, ticker.cotacaoAtual ?? 0);
     }
 
-    const allTickers = computed(() => Object.values(tickers.value))
-    const activeTickers = computed(() => allTickers.value.filter((t) => t.status === 'active'))
+    const allTickers = computed(() => Object.values(tickers.value));
+    const activeTickers = computed(() => allTickers.value.filter((t) => t.status === 'active'));
 
     function reset(): void {
-      tickers.value = {}
-      lastFetchedAt.value = null
+      tickers.value = {};
+      lastFetchedAt.value = null;
     }
 
     return {
@@ -95,7 +95,7 @@ export const useTickerStore = defineStore(
       allTickers,
       activeTickers,
       reset,
-    }
+    };
   },
   { persist: true },
-)
+);

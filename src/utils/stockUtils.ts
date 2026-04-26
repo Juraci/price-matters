@@ -1,4 +1,4 @@
-import type { DerivedMetrics, TickerSnapshot } from '@/types/stock'
+import type { DerivedMetrics, TickerSnapshot } from '@/types/stock';
 
 export function slugify(nome: string): string {
   return nome
@@ -6,7 +6,7 @@ export function slugify(nome: string): string {
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
+    .replace(/[^a-z0-9-]/g, '');
 }
 
 // Fields intentionally excluded from change detection:
@@ -21,21 +21,21 @@ const VOLATILE_FIELDS: (keyof TickerSnapshot)[] = [
   'dividaLiquidaEbitda',
   'payoutEsperado',
   'cagrLucros5Anos',
-]
+];
 
 export function snapshotsDiffer(a: TickerSnapshot, b: TickerSnapshot): boolean {
-  return VOLATILE_FIELDS.some((field) => a[field] !== b[field])
+  return VOLATILE_FIELDS.some((field) => a[field] !== b[field]);
 }
 
 export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): DerivedMetrics {
-  const { precoTeto, lucroLiquidoEstimado, quantidadeTotalAcoes, payoutEsperado } = snapshot
+  const { precoTeto, lucroLiquidoEstimado, quantidadeTotalAcoes, payoutEsperado } = snapshot;
 
   const lucroPorAcaoEstimado =
-    quantidadeTotalAcoes === 0 ? 0 : lucroLiquidoEstimado / quantidadeTotalAcoes
-  const margemSeguranca = precoTeto === 0 ? 0 : (1 - cotacaoAtual / precoTeto) * 100
-  const plProjetado = lucroPorAcaoEstimado === 0 ? 0 : cotacaoAtual / lucroPorAcaoEstimado
-  const dividendoPorAcaoBruto = (payoutEsperado / 100) * lucroPorAcaoEstimado
-  const valorDeMercado = quantidadeTotalAcoes * cotacaoAtual
+    quantidadeTotalAcoes === 0 ? 0 : lucroLiquidoEstimado / quantidadeTotalAcoes;
+  const margemSeguranca = precoTeto === 0 ? 0 : (1 - cotacaoAtual / precoTeto) * 100;
+  const plProjetado = lucroPorAcaoEstimado === 0 ? 0 : cotacaoAtual / lucroPorAcaoEstimado;
+  const dividendoPorAcaoBruto = (payoutEsperado / 100) * lucroPorAcaoEstimado;
+  const valorDeMercado = quantidadeTotalAcoes * cotacaoAtual;
 
   return {
     margemSeguranca,
@@ -43,5 +43,5 @@ export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): 
     plProjetado,
     dividendoPorAcaoBruto,
     valorDeMercado,
-  }
+  };
 }

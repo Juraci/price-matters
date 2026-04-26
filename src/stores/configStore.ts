@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
 
 export interface StockToggleableColumn {
-  field: string
-  header: string
+  field: string;
+  header: string;
 }
 
 export const STOCK_TOGGLEABLE_COLUMNS: StockToggleableColumn[] = [
@@ -25,28 +25,28 @@ export const STOCK_TOGGLEABLE_COLUMNS: StockToggleableColumn[] = [
   { field: 'frequenciaAnuncios', header: 'Frequência' },
   { field: 'mesesAnunciosDividendos', header: 'Meses' },
   { field: 'ultimaAtualizacao', header: 'Atualizado em' },
-]
+];
 
-const DEFAULT_VISIBLE: string[] = STOCK_TOGGLEABLE_COLUMNS.map((c) => c.field)
+const DEFAULT_VISIBLE: string[] = STOCK_TOGGLEABLE_COLUMNS.map((c) => c.field);
 
 export const useConfigStore = defineStore(
   'config',
   () => {
-    const stockTableVisibleColumns = ref<string[]>([...DEFAULT_VISIBLE])
-    const brapiApiKey = ref<string>('')
+    const stockTableVisibleColumns = ref<string[]>([...DEFAULT_VISIBLE]);
+    const brapiApiKey = ref<string>('');
 
     const isStockColumnVisible = computed(
       () => (field: string) => stockTableVisibleColumns.value.includes(field),
-    )
+    );
 
-    const isBrapiConfigured = computed(() => brapiApiKey.value.trim().length > 0)
+    const isBrapiConfigured = computed(() => brapiApiKey.value.trim().length > 0);
 
     function setStockTableVisibleColumns(fields: string[]): void {
-      stockTableVisibleColumns.value = fields
+      stockTableVisibleColumns.value = fields;
     }
 
     function setBrapiApiKey(key: string): void {
-      brapiApiKey.value = key.trim()
+      brapiApiKey.value = key.trim();
     }
 
     return {
@@ -56,7 +56,7 @@ export const useConfigStore = defineStore(
       isBrapiConfigured,
       setStockTableVisibleColumns,
       setBrapiApiKey,
-    }
+    };
   },
   { persist: true },
-)
+);

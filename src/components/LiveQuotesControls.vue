@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import Button from 'primevue/button'
-import Tag from 'primevue/tag'
+import { computed } from 'vue';
+import Button from 'primevue/button';
+import Tag from 'primevue/tag';
 
 const props = defineProps<{
-  lastFetchedAt: string | null
-  isFetching: boolean
-  lastError: string | null
-}>()
+  lastFetchedAt: string | null;
+  isFetching: boolean;
+  lastError: string | null;
+}>();
 
-defineEmits<{ refresh: [] }>()
+defineEmits<{ refresh: [] }>();
 
 const lastFetchedLabel = computed(() => {
-  if (!props.lastFetchedAt) return 'Nunca atualizado'
-  const d = new Date(props.lastFetchedAt)
-  return `Atualizado às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
-})
+  if (!props.lastFetchedAt) return 'Nunca atualizado';
+  const d = new Date(props.lastFetchedAt);
+  return `Atualizado às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+});
 </script>
 
 <template>

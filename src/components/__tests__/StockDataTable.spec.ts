@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia, getActivePinia } from 'pinia'
-import PrimeVue from 'primevue/config'
-import Aura from '@primeuix/themes/aura'
-import StockDataTable from '../StockDataTable.vue'
-import { useTickerStore } from '@/stores/tickerStore'
-import type { TickerSnapshot } from '@/types/stock'
+import { describe, it, expect, beforeEach } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { setActivePinia, createPinia, getActivePinia } from 'pinia';
+import PrimeVue from 'primevue/config';
+import Aura from '@primeuix/themes/aura';
+import StockDataTable from '../StockDataTable.vue';
+import { useTickerStore } from '@/stores/tickerStore';
+import type { TickerSnapshot } from '@/types/stock';
 
 function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
   return {
@@ -26,46 +26,46 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     mesesAnunciosDividendos: 'dezembro',
     ultimaAtualizacao: '01/01/2026',
     ...overrides,
-  }
+  };
 }
 
 function mountComponent() {
   return mount(StockDataTable, {
     global: { plugins: [getActivePinia()!, [PrimeVue, { theme: { preset: Aura } }]] },
-  })
+  });
 }
 
 describe('StockDataTable', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+    setActivePinia(createPinia());
+  });
 
   it('renders the data table container', () => {
-    const wrapper = mountComponent()
-    expect(wrapper.find('[data-testid="stock-table"]').exists()).toBe(true)
-  })
+    const wrapper = mountComponent();
+    expect(wrapper.find('[data-testid="stock-table"]').exists()).toBe(true);
+  });
 
   it('shows empty-state message when no tickers are loaded', () => {
-    const wrapper = mountComponent()
-    expect(wrapper.text()).toContain('Nenhum dado importado')
-  })
+    const wrapper = mountComponent();
+    expect(wrapper.text()).toContain('Nenhum dado importado');
+  });
 
   it('shows the table when tickers are present', async () => {
-    const tickerStore = useTickerStore()
-    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10)
-    const wrapper = mountComponent()
-    await wrapper.vm.$nextTick()
-    expect(wrapper.text()).not.toContain('Nenhum dado importado')
-  })
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+    const wrapper = mountComponent();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).not.toContain('Nenhum dado importado');
+  });
 
   it('displays ticker codes and empresa names as columns', async () => {
-    const tickerStore = useTickerStore()
-    tickerStore.upsertTicker('KLBN11', 'Klabin', makeSnapshot(), 10)
-    tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot(), 10)
-    const wrapper = mountComponent()
-    await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('KLBN11')
-    expect(wrapper.text()).toContain('KLBN4')
-    expect(wrapper.text()).toContain('Klabin')
-  })
-})
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('KLBN11', 'Klabin', makeSnapshot(), 10);
+    tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot(), 10);
+    const wrapper = mountComponent();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain('KLBN11');
+    expect(wrapper.text()).toContain('KLBN4');
+    expect(wrapper.text()).toContain('Klabin');
+  });
+});

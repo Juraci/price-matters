@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { computeDerived, slugify, snapshotsDiffer } from '../stockUtils'
-import type { TickerSnapshot } from '@/types/stock'
+import { describe, it, expect } from 'vitest';
+import { computeDerived, slugify, snapshotsDiffer } from '../stockUtils';
+import type { TickerSnapshot } from '@/types/stock';
 
 function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
   return {
@@ -21,95 +21,102 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     mesesAnunciosDividendos: 'dezembro',
     ultimaAtualizacao: '01/01/2026',
     ...overrides,
-  }
+  };
 }
 
 describe('slugify', () => {
   it('lowercases and replaces spaces with hyphens', () => {
-    expect(slugify('Banco Mercantil')).toBe('banco-mercantil')
-  })
+    expect(slugify('Banco Mercantil')).toBe('banco-mercantil');
+  });
 
   it('strips accents (NFD normalization)', () => {
-    expect(slugify('Oléo e Gás')).toBe('oleo-e-gas')
-  })
+    expect(slugify('Oléo e Gás')).toBe('oleo-e-gas');
+  });
 
   it('strips non-alphanumeric characters', () => {
-    expect(slugify('Banco S.A.')).toBe('banco-sa')
-  })
+    expect(slugify('Banco S.A.')).toBe('banco-sa');
+  });
 
   it('same slug for same name across calls', () => {
-    expect(slugify('Klabin')).toBe(slugify('Klabin'))
-  })
-})
+    expect(slugify('Klabin')).toBe(slugify('Klabin'));
+  });
+});
 
 describe('snapshotsDiffer', () => {
   it('returns false for two identical snapshots', () => {
-    const s = makeSnapshot()
-    expect(snapshotsDiffer(s, { ...s })).toBe(false)
-  })
+    const s = makeSnapshot();
+    expect(snapshotsDiffer(s, { ...s })).toBe(false);
+  });
 
   it('returns true when precoTeto differs', () => {
-    const a = makeSnapshot({ precoTeto: 12 })
-    const b = makeSnapshot({ precoTeto: 14 })
-    expect(snapshotsDiffer(a, b)).toBe(true)
-  })
+    const a = makeSnapshot({ precoTeto: 12 });
+    const b = makeSnapshot({ precoTeto: 14 });
+    expect(snapshotsDiffer(a, b)).toBe(true);
+  });
 
   it('returns true when dividendYieldBruto differs', () => {
-    const a = makeSnapshot({ dividendYieldBruto: 5 })
-    const b = makeSnapshot({ dividendYieldBruto: 6 })
-    expect(snapshotsDiffer(a, b)).toBe(true)
-  })
+    const a = makeSnapshot({ dividendYieldBruto: 5 });
+    const b = makeSnapshot({ dividendYieldBruto: 6 });
+    expect(snapshotsDiffer(a, b)).toBe(true);
+  });
 
   it('returns false when only importId and importedAt differ (metadata)', () => {
-    const a = makeSnapshot({ importId: 'import-1', importedAt: '2026-01-01T00:00:00.000Z' })
-    const b = makeSnapshot({ importId: 'import-2', importedAt: '2026-02-01T00:00:00.000Z' })
-    expect(snapshotsDiffer(a, b)).toBe(false)
-  })
-})
+    const a = makeSnapshot({ importId: 'import-1', importedAt: '2026-01-01T00:00:00.000Z' });
+    const b = makeSnapshot({ importId: 'import-2', importedAt: '2026-02-01T00:00:00.000Z' });
+    expect(snapshotsDiffer(a, b)).toBe(false);
+  });
+});
 
 describe('computeDerived', () => {
   it('margemSeguranca = (1 - cotacao/precoTeto) * 100', () => {
-    const d = computeDerived(makeSnapshot({ precoTeto: 81 }), 62.21)
-    expect(d.margemSeguranca).toBeCloseTo(23.1975, 3)
-  })
+    const d = computeDerived(makeSnapshot({ precoTeto: 81 }), 62.21);
+    expect(d.margemSeguranca).toBeCloseTo(23.1975, 3);
+  });
 
   it('lucroPorAcaoEstimado = lucro / quantidade', () => {
     const d = computeDerived(
       makeSnapshot({ lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
       10,
-    )
-    expect(d.lucroPorAcaoEstimado).toBe(2)
-  })
+    );
+    expect(d.lucroPorAcaoEstimado).toBe(2);
+  });
 
   it('plProjetado = cotacao / lpa', () => {
     const d = computeDerived(
       makeSnapshot({ lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
       20,
-    )
-    expect(d.plProjetado).toBe(10)
-  })
+    );
+    expect(d.plProjetado).toBe(10);
+  });
 
   it('dividendoPorAcaoBruto = (payout/100) * lpa', () => {
     const d = computeDerived(
-      makeSnapshot({ payoutEsperado: 50, lucroLiquidoEstimado: 200000, quantidadeTotalAcoes: 100000 }),
+      makeSnapshot({
+        payoutEsperado: 50,
+        lucroLiquidoEstimado: 200000,
+        quantidadeTotalAcoes: 100000,
+      }),
       10,
-    )
-    expect(d.dividendoPorAcaoBruto).toBe(1)
-  })
+    );
+    expect(d.dividendoPorAcaoBruto).toBe(1);
+  });
 
   it('valorDeMercado = quantidade * cotacao', () => {
-    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 1000 }), 25)
-    expect(d.valorDeMercado).toBe(25000)
-  })
+    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 1000 }), 25);
+    expect(d.valorDeMercado).toBe(25000);
+  });
 
   it('returns 0 for margemSeguranca when precoTeto is 0', () => {
-    const d = computeDerived(makeSnapshot({ precoTeto: 0 }), 10)
-    expect(d.margemSeguranca).toBe(0)
-  })
+    const d = computeDerived(makeSnapshot({ precoTeto: 0 }), 10);
+    expect(d.margemSeguranca).toBe(0);
+  });
 
   it('returns 0 for lucroPorAcaoEstimado and plProjetado when quantidadeTotalAcoes is 0', () => {
-    const d = computeDerived(makeSnapshot({ quantidadeTotalAcoes: 0, lucroLiquidoEstimado: 100 }), 10)
-    expect(d.lucroPorAcaoEstimado).toBe(0)
-    expect(d.plProjetado).toBe(0)
-  })
-})
+    const d = computeDerived(
+      makeSnapshot({ quantidadeTotalAcoes: 0, lucroLiquidoEstimado: 100 }),
+      10,
+    );
+    expect(d.lucroPorAcaoEstimado).toBe(0);
+    expect(d.plProjetado).toBe(0);
+  });
+});

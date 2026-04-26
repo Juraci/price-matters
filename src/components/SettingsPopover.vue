@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import Button from 'primevue/button'
-import Popover from 'primevue/popover'
-import Password from 'primevue/password'
-import { useConfigStore } from '@/stores/configStore'
+import { ref } from 'vue';
+import Button from 'primevue/button';
+import Popover from 'primevue/popover';
+import Password from 'primevue/password';
+import { useConfigStore } from '@/stores/configStore';
 
-const configStore = useConfigStore()
+const configStore = useConfigStore();
 
-const popover = ref<InstanceType<typeof Popover> | null>(null)
-const apiKeyInput = ref<string>('')
+const popover = ref<InstanceType<typeof Popover> | null>(null);
+const apiKeyInput = ref<string>('');
 
 function toggle(event: Event): void {
-  apiKeyInput.value = configStore.brapiApiKey
-  popover.value?.toggle(event)
+  apiKeyInput.value = configStore.brapiApiKey;
+  popover.value?.toggle(event);
 }
 
 function save(): void {
-  configStore.setBrapiApiKey(apiKeyInput.value)
-  popover.value?.hide()
+  configStore.setBrapiApiKey(apiKeyInput.value);
+  popover.value?.hide();
 }
 
 function clear(): void {
-  apiKeyInput.value = ''
-  configStore.setBrapiApiKey('')
+  apiKeyInput.value = '';
+  configStore.setBrapiApiKey('');
 }
 </script>
 
@@ -67,12 +67,7 @@ function clear(): void {
             data-testid="settings-clear"
             @click="clear"
           />
-          <Button
-            label="Salvar"
-            size="small"
-            data-testid="settings-save"
-            @click="save"
-          />
+          <Button label="Salvar" size="small" data-testid="settings-save" @click="save" />
         </div>
       </div>
     </Popover>

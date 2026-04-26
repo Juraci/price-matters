@@ -3,6 +3,14 @@
   "include": ["./**/*"],
   "compilerOptions": {
     "types": ["node"],
-    "lib": ["es2024", "ESNext.Array", "ESNext.Collection", "ESNext.Error", "ESNext.Iterator", "ESNext.Promise", "dom"]
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Error",
+      "ESNext.Iterator",
+      "ESNext.Promise",
+      "dom"
+    ]
   }
 }

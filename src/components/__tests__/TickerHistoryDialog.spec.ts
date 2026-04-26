@@ -1,11 +1,11 @@
 // src/components/__tests__/TickerHistoryDialog.spec.ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { setActivePinia, createPinia } from 'pinia'
-import PrimeVue from 'primevue/config'
-import Aura from '@primeuix/themes/aura'
-import TickerHistoryDialog from '../TickerHistoryDialog.vue'
-import type { Ticker } from '@/types/stock'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { setActivePinia, createPinia } from 'pinia';
+import PrimeVue from 'primevue/config';
+import Aura from '@primeuix/themes/aura';
+import TickerHistoryDialog from '../TickerHistoryDialog.vue';
+import type { Ticker } from '@/types/stock';
 
 const mockTicker: Ticker = {
   codigo: 'KLBN11',
@@ -32,33 +32,33 @@ const mockTicker: Ticker = {
       ultimaAtualizacao: '18/04/2026',
     },
   ],
-}
+};
 
 describe('TickerHistoryDialog', () => {
   beforeEach(() => {
-    setActivePinia(createPinia())
-  })
+    setActivePinia(createPinia());
+  });
 
   afterEach(() => {
-    document.body.innerHTML = ''
-  })
+    document.body.innerHTML = '';
+  });
 
   it('renders dialog header with ticker code when visible', async () => {
     mount(TickerHistoryDialog, {
       props: { visible: true, ticker: mockTicker },
       global: { plugins: [createPinia(), [PrimeVue, { theme: { preset: Aura } }]] },
       attachTo: document.body,
-    })
-    await new Promise((r) => setTimeout(r, 0))
-    expect(document.body.innerHTML).toContain('KLBN11')
-  })
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.body.innerHTML).toContain('KLBN11');
+  });
 
   it('passes ticker prop through to template', async () => {
     const wrapper = mount(TickerHistoryDialog, {
       props: { visible: true, ticker: mockTicker },
       global: { plugins: [createPinia(), [PrimeVue, { theme: { preset: Aura } }]] },
       attachTo: document.body,
-    })
-    expect(wrapper.props('ticker')).toEqual(mockTicker)
-  })
-})
+    });
+    expect(wrapper.props('ticker')).toEqual(mockTicker);
+  });
+});

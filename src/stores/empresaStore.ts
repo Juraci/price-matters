@@ -1,15 +1,15 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { Empresa } from '@/types/stock'
-import { slugify } from '@/utils/stockUtils'
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { Empresa } from '@/types/stock';
+import { slugify } from '@/utils/stockUtils';
 
 export const useEmpresaStore = defineStore(
   'empresa',
   () => {
-    const empresas = ref<Record<string, Empresa>>({})
+    const empresas = ref<Record<string, Empresa>>({});
 
     function ensureEmpresa(nome: string, codigo: string): void {
-      const id = slugify(nome)
+      const id = slugify(nome);
       if (!empresas.value[id]) {
         empresas.value[id] = {
           id,
@@ -17,28 +17,28 @@ export const useEmpresaStore = defineStore(
           codigos: [codigo],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        }
-        return
+        };
+        return;
       }
-      const empresa = empresas.value[id]!
+      const empresa = empresas.value[id]!;
       // O(n) scan is acceptable: companies typically have 1-4 stock codes
       if (!empresa.codigos.includes(codigo)) {
-        empresa.codigos.push(codigo)
-        empresa.updatedAt = new Date().toISOString()
+        empresa.codigos.push(codigo);
+        empresa.updatedAt = new Date().toISOString();
       }
     }
 
     function hasEmpresa(nome: string): boolean {
-      return slugify(nome) in empresas.value
+      return slugify(nome) in empresas.value;
     }
 
-    const allEmpresas = computed(() => Object.values(empresas.value))
+    const allEmpresas = computed(() => Object.values(empresas.value));
 
     function reset(): void {
-      empresas.value = {}
+      empresas.value = {};
     }
 
-    return { empresas, ensureEmpresa, hasEmpresa, allEmpresas, reset }
+    return { empresas, ensureEmpresa, hasEmpresa, allEmpresas, reset };
   },
   { persist: true },
-)
+);

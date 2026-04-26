@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import Dialog from 'primevue/dialog'
-import DataTable from 'primevue/datatable'
-import Column from 'primevue/column'
-import type { Ticker, TickerSnapshot } from '@/types/stock'
+import { computed } from 'vue';
+import Dialog from 'primevue/dialog';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import type { Ticker, TickerSnapshot } from '@/types/stock';
 
 const props = defineProps<{
-  visible: boolean
-  ticker: Ticker | null
-}>()
+  visible: boolean;
+  ticker: Ticker | null;
+}>();
 
-defineEmits<{ 'update:visible': [value: boolean] }>()
+defineEmits<{ 'update:visible': [value: boolean] }>();
 
 interface HistoryRow {
-  importedAt: string
-  filename: string
-  precoTeto: number
-  dividendYieldBruto: number
-  lucroLiquidoEstimado: number
-  snapshot: TickerSnapshot
+  importedAt: string;
+  filename: string;
+  precoTeto: number;
+  dividendYieldBruto: number;
+  lucroLiquidoEstimado: number;
+  snapshot: TickerSnapshot;
 }
 
 const historyRows = computed<HistoryRow[]>(() =>
@@ -30,7 +30,7 @@ const historyRows = computed<HistoryRow[]>(() =>
     lucroLiquidoEstimado: snap.lucroLiquidoEstimado,
     snapshot: snap,
   })),
-)
+);
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', {
@@ -39,11 +39,11 @@ function formatDate(iso: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  })
+  });
 }
 
 function formatBRL(value: number): string {
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 </script>
 
@@ -51,6 +51,7 @@ function formatBRL(value: number): string {
   <Dialog
     :visible="visible"
     :header="`Histórico: ${ticker?.codigo ?? ''}`"
+    data-test-snapshot-history
     modal
     maximizable
     :style="{ width: '80vw' }"
