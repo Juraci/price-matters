@@ -28,3 +28,24 @@ a,
     padding: 0 2rem;
   }
 }
+
+@media (max-width: 768px) {
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  #app {
+    padding: 0.5rem;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .p-multiselect-overlay,
+  .p-select-overlay,
+  .p-datatable-filter-overlay,
+  .p-popover {
+    max-width: calc(100vw - 1rem);
+  }
+}

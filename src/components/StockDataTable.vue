@@ -15,6 +15,7 @@ import {
   type StockToggleableColumn,
 } from '@/stores/configStore';
 import { useLiveQuotes } from '@/composables/useLiveQuotes';
+import { useIsMobile } from '@/composables/useIsMobile';
 import LiveQuotesControls from './LiveQuotesControls.vue';
 import SettingsPopover from './SettingsPopover.vue';
 import TickerHistoryDialog from './TickerHistoryDialog.vue';
@@ -23,6 +24,19 @@ import type { Ticker } from '@/types/stock';
 const tickerStore = useTickerStore();
 const configStore = useConfigStore();
 const { lastFetchedAt, isFetching, lastError, refresh } = useLiveQuotes();
+const { isMobile } = useIsMobile();
+
+const MOBILE_HIDDEN_COLUMNS = new Set<string>([
+  'empresaNome',
+  'status',
+  'atuacao',
+  'ultimaAtualizacao',
+]);
+
+function showColumn(field: string): boolean {
+  if (isMobile.value && MOBILE_HIDDEN_COLUMNS.has(field)) return false;
+  return configStore.isStockColumnVisible(field);
+}
 
 const selectedColumns = computed<StockToggleableColumn[]>({
   get: () =>
@@ -162,7 +176,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </div>
       </template>
       <Column
-        v-if="configStore.isStockColumnVisible('empresaNome')"
+        v-if="showColumn('empresaNome')"
         field="empresaNome"
         header="Empresa"
         sortable
@@ -187,7 +201,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('status')"
+        v-if="showColumn('status')"
         field="status"
         header="Status"
         :showFilterMatchModes="false"
@@ -212,7 +226,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('atuacao')"
+        v-if="showColumn('atuacao')"
         field="atuacao"
         header="Setor"
         sortable
@@ -286,7 +300,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('dividendYieldBruto')"
+        v-if="showColumn('dividendYieldBruto')"
         field="dividendYieldBruto"
         header="DY (%)"
         sortable
@@ -305,7 +319,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('plProjetado')"
+        v-if="showColumn('plProjetado')"
         field="plProjetado"
         header="P/L Proj."
         sortable
@@ -324,7 +338,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('plMedio10Anos')"
+        v-if="showColumn('plMedio10Anos')"
         field="plMedio10Anos"
         header="P/L Médio"
         sortable
@@ -342,7 +356,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('desvioPLMedia')"
+        v-if="showColumn('desvioPLMedia')"
         field="desvioPLMedia"
         header="Desvio P/L"
         sortable
@@ -361,7 +375,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('cagrLucros5Anos')"
+        v-if="showColumn('cagrLucros5Anos')"
         field="cagrLucros5Anos"
         header="CAGR 5a"
         sortable
@@ -380,7 +394,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('dividaLiquidaEbitda')"
+        v-if="showColumn('dividaLiquidaEbitda')"
         field="dividaLiquidaEbitda"
         header="Dívida/EBITDA"
         sortable
@@ -407,7 +421,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('lucroLiquidoEstimado')"
+        v-if="showColumn('lucroLiquidoEstimado')"
         field="lucroLiquidoEstimado"
         header="Lucro Líq."
         sortable
@@ -426,7 +440,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('lucroPorAcaoEstimado')"
+        v-if="showColumn('lucroPorAcaoEstimado')"
         field="lucroPorAcaoEstimado"
         header="LPA"
         sortable
@@ -445,7 +459,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('payoutEsperado')"
+        v-if="showColumn('payoutEsperado')"
         field="payoutEsperado"
         header="Payout"
         sortable
@@ -464,7 +478,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('dividendoPorAcaoBruto')"
+        v-if="showColumn('dividendoPorAcaoBruto')"
         field="dividendoPorAcaoBruto"
         header="DPA Bruto"
         sortable
@@ -483,7 +497,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('valorDeMercado')"
+        v-if="showColumn('valorDeMercado')"
         field="valorDeMercado"
         header="Valor Mercado"
         sortable
@@ -502,7 +516,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('quantidadeTotalAcoes')"
+        v-if="showColumn('quantidadeTotalAcoes')"
         field="quantidadeTotalAcoes"
         header="Qtd. Ações"
         sortable
@@ -518,7 +532,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('frequenciaAnuncios')"
+        v-if="showColumn('frequenciaAnuncios')"
         field="frequenciaAnuncios"
         header="Frequência"
         filter
@@ -529,7 +543,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('mesesAnunciosDividendos')"
+        v-if="showColumn('mesesAnunciosDividendos')"
         field="mesesAnunciosDividendos"
         header="Meses"
         filter
@@ -540,7 +554,7 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
         </template>
       </Column>
       <Column
-        v-if="configStore.isStockColumnVisible('ultimaAtualizacao')"
+        v-if="showColumn('ultimaAtualizacao')"
         field="ultimaAtualizacao"
         header="Atualizado em"
         filter
@@ -582,6 +596,16 @@ function rampBgColor(value: number, scale: number, goodWhen: 'positive' | 'negat
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .table-header {
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+  .table-header :deep(.p-multiselect) {
+    width: 100%;
+  }
 }
 
 :deep(.removed-row) {

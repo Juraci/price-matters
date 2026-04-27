@@ -6,6 +6,7 @@ import Column from 'primevue/column';
 import Select from 'primevue/select';
 import Divider from 'primevue/divider';
 import { getDiff } from '@/utils/stockUtils';
+import { useIsMobile } from '@/composables/useIsMobile';
 import type { Ticker, TickerSnapshot } from '@/types/stock';
 
 const props = defineProps<{
@@ -14,6 +15,16 @@ const props = defineProps<{
 }>();
 
 defineEmits<{ 'update:visible': [value: boolean] }>();
+
+const { isMobile } = useIsMobile();
+const maximized = ref(false);
+watch(
+  isMobile,
+  (mobile) => {
+    if (mobile) maximized.value = true;
+  },
+  { immediate: true },
+);
 
 interface HistoryRow {
   importedAt: string;
@@ -152,8 +163,10 @@ const diffRows = computed<DiffRow[]>(() => {
     data-test-snapshot-history
     modal
     maximizable
-    :style="{ width: '80vw' }"
+    :maximized="maximized"
+    :style="{ width: isMobile ? '100vw' : '80vw' }"
     @update:visible="$emit('update:visible', $event)"
+    @update:maximized="maximized = $event"
   >
     <div v-if="showPicker" class="diff-controls" data-test-diff-picker>
       <label class="diff-control">
@@ -219,6 +232,16 @@ const diffRows = computed<DiffRow[]>(() => {
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .diff-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .diff-control {
+    width: 100%;
+  }
 }
 
 .diff-table {

@@ -110,6 +110,7 @@ function handleReset() {
 .controls {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
