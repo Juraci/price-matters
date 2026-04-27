@@ -29,7 +29,29 @@ export const STOCK_TOGGLEABLE_COLUMNS: StockToggleableColumn[] = [
   { field: 'ultimaAtualizacao', header: 'Atualizado em' },
 ];
 
-const DEFAULT_VISIBLE: string[] = STOCK_TOGGLEABLE_COLUMNS.map((c) => c.field);
+// Hidden by default on a fresh install when the user is on a narrow viewport.
+// This is initialization only — the user can re-enable any of these via the
+// column toggle, and persisted state always wins on subsequent loads.
+export const MOBILE_HIDDEN_COLUMNS = new Set<string>([
+  'empresaNome',
+  'status',
+  'atuacao',
+  'ultimaAtualizacao',
+]);
+
+const MOBILE_BREAKPOINT_PX = 768;
+
+function isMobileViewport(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT_PX}px)`).matches;
+}
+
+function buildDefaultVisibleColumns(): string[] {
+  const mobile = isMobileViewport();
+  return STOCK_TOGGLEABLE_COLUMNS.map((c) => c.field).filter(
+    (field) => !mobile || !MOBILE_HIDDEN_COLUMNS.has(field),
+  );
+}
 
 export type StockFilterKind = 'text' | 'numeric' | 'enum';
 
@@ -91,7 +113,7 @@ export function buildDefaultStockTableFilters(): DataTableFilterMeta {
 export const useConfigStore = defineStore(
   'config',
   () => {
-    const stockTableVisibleColumns = ref<string[]>([...DEFAULT_VISIBLE]);
+    const stockTableVisibleColumns = ref<string[]>(buildDefaultVisibleColumns());
     const brapiApiKey = ref<string>('');
     const stockTableSortField = ref<string>('empresaNome');
     const stockTableSortOrder = ref<number | undefined>(1);
