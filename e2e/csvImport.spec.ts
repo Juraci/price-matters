@@ -24,6 +24,11 @@ test.describe('CSV Stock Import', () => {
     await expect(page.getByText('Banco Itau').first()).toBeVisible();
     await expect(page.getByText('ITUB3')).toBeVisible();
     await expect(page.getByText('ITUB4')).toBeVisible();
+
+    // BMEB3 derived DY: payout 30%, lucro 1.2B, qtd 123_728_626, cotação 61.93
+    // → LPA ≈ 9.69877, DPA ≈ 2.90963, DY = (DPA / cotação) * 100 ≈ 4.6983 → rounded to 4.7.
+    const bmebRow = page.locator('[data-testid="stock-table"] tr').filter({ hasText: 'BMEB3' });
+    await expect(bmebRow.getByText('4.7%', { exact: true })).toBeVisible();
   });
 
   test('all tickers of one empresa show the empresa name in their row', async ({ page }) => {
