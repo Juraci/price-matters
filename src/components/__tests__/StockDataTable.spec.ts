@@ -23,7 +23,6 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     cagrLucros5Anos: 5,
     dividaLiquidaEbitda: 0.5,
     payoutEsperado: 50,
-    dividendYieldBruto: 5,
     precoTeto: 12,
     frequenciaAnuncios: 'Anual',
     mesesAnunciosDividendos: 'dezembro',

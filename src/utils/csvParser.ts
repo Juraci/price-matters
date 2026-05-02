@@ -53,8 +53,8 @@ export function parseCsv(
       const cols = parseCsvLine(line);
 
       // Columns 4 (valorDeMercado), 6 (plProjetado), 11 (lucroPorAcaoEstimado),
-      // 13 (dividendoPorAcaoBruto), 17 (margemSeguranca) are derived and
-      // recomputed from other inputs; see computeDerived in stockUtils.
+      // 13 (dividendoPorAcaoBruto), 14 (dividendYieldBruto), 17 (margemSeguranca)
+      // are derived and recomputed from other inputs; see computeDerived in stockUtils.
       const snapshot: TickerSnapshot = {
         importId,
         importedAt,
@@ -67,7 +67,6 @@ export function parseCsv(
         cagrLucros5Anos: parseBRPercent(cols[9] ?? '0'),
         dividaLiquidaEbitda: parseBRNumber(cols[10] ?? '0'),
         payoutEsperado: parseBRPercent(cols[12] ?? '0'),
-        dividendYieldBruto: parseBRPercent(cols[14] ?? '0'),
         precoTeto: parseBRCurrency(cols[16] ?? '0'),
         frequenciaAnuncios: cols[18]?.trim() ?? '',
         mesesAnunciosDividendos: cols[19]?.trim() ?? '',

@@ -17,7 +17,6 @@ export function slugify(nome: string): string {
 //   slowly-changing dimensions; excluded to reduce snapshot churn
 const VOLATILE_FIELDS: (keyof TickerSnapshot)[] = [
   'precoTeto',
-  'dividendYieldBruto',
   'lucroLiquidoEstimado',
   'dividaLiquidaEbitda',
   'payoutEsperado',
@@ -42,6 +41,8 @@ export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): 
   const margemSeguranca = precoTeto === 0 ? 0 : (1 - cotacaoAtual / precoTeto) * 100;
   const plProjetado = lucroPorAcaoEstimado === 0 ? 0 : cotacaoAtual / lucroPorAcaoEstimado;
   const dividendoPorAcaoBruto = (payoutEsperado / 100) * lucroPorAcaoEstimado;
+  const dividendYieldBruto =
+    cotacaoAtual === 0 ? 0 : (dividendoPorAcaoBruto / cotacaoAtual) * 100;
   const valorDeMercado = quantidadeTotalAcoes * cotacaoAtual;
 
   return {
@@ -49,6 +50,7 @@ export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): 
     lucroPorAcaoEstimado,
     plProjetado,
     dividendoPorAcaoBruto,
+    dividendYieldBruto,
     valorDeMercado,
   };
 }

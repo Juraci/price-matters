@@ -12,7 +12,6 @@ export interface TickerSnapshot {
   cagrLucros5Anos: number;
   dividaLiquidaEbitda: number;
   payoutEsperado: number;
-  dividendYieldBruto: number;
   precoTeto: number;
   frequenciaAnuncios: string;
   mesesAnunciosDividendos: string;
@@ -24,6 +23,7 @@ export interface DerivedMetrics {
   lucroPorAcaoEstimado: number;
   plProjetado: number;
   dividendoPorAcaoBruto: number;
+  dividendYieldBruto: number;
   valorDeMercado: number;
 }
 

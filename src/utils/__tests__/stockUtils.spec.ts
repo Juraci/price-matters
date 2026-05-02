@@ -15,7 +15,6 @@ function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
     cagrLucros5Anos: 5,
     dividaLiquidaEbitda: 0.5,
     payoutEsperado: 50,
-    dividendYieldBruto: 5,
     precoTeto: 12,
     frequenciaAnuncios: 'Anual',
     mesesAnunciosDividendos: 'dezembro',
@@ -51,12 +50,6 @@ describe('snapshotsDiffer', () => {
   it('returns true when precoTeto differs', () => {
     const a = makeSnapshot({ precoTeto: 12 });
     const b = makeSnapshot({ precoTeto: 14 });
-    expect(snapshotsDiffer(a, b)).toBe(true);
-  });
-
-  it('returns true when dividendYieldBruto differs', () => {
-    const a = makeSnapshot({ dividendYieldBruto: 5 });
-    const b = makeSnapshot({ dividendYieldBruto: 6 });
     expect(snapshotsDiffer(a, b)).toBe(true);
   });
 
@@ -115,6 +108,30 @@ describe('computeDerived', () => {
       10,
     );
     expect(d.dividendoPorAcaoBruto).toBe(1);
+  });
+
+  it('dividendYieldBruto = (dpa / cotacao) * 100', () => {
+    const d = computeDerived(
+      makeSnapshot({
+        payoutEsperado: 50,
+        lucroLiquidoEstimado: 200000,
+        quantidadeTotalAcoes: 100000,
+      }),
+      10,
+    );
+    expect(d.dividendYieldBruto).toBe(10);
+  });
+
+  it('returns 0 for dividendYieldBruto when cotacaoAtual is 0', () => {
+    const d = computeDerived(
+      makeSnapshot({
+        payoutEsperado: 50,
+        lucroLiquidoEstimado: 200000,
+        quantidadeTotalAcoes: 100000,
+      }),
+      0,
+    );
+    expect(d.dividendYieldBruto).toBe(0);
   });
 
   it('valorDeMercado = quantidade * cotacao', () => {

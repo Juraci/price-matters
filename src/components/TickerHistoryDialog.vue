@@ -63,7 +63,6 @@ function formatDate(iso: string): string {
 
 const FIELD_LABELS: Record<string, string> = {
   precoTeto: 'Preço Teto',
-  dividendYieldBruto: 'DY (%)',
   lucroLiquidoEstimado: 'Lucro Líq.',
   dividaLiquidaEbitda: 'Dívida/EBITDA',
   payoutEsperado: 'Payout',
@@ -74,7 +73,6 @@ const FIELD_LABELS: Record<string, string> = {
 const FIELD_FORMATTERS: Record<string, (v: number) => string> = {
   precoTeto: formatBRL,
   lucroLiquidoEstimado: formatBRL,
-  dividendYieldBruto: (v) => `${v}%`,
   payoutEsperado: (v) => `${v}%`,
   cagrLucros5Anos: (v) => `${v}%`,
   dividaLiquidaEbitda: (v) => v.toString(),
@@ -84,7 +82,6 @@ const FIELD_FORMATTERS: Record<string, (v: number) => string> = {
 // 'up' = an increase is favorable for the investor; 'down' = an increase is unfavorable.
 const FIELD_GOOD_DIRECTION: Record<string, 'up' | 'down'> = {
   precoTeto: 'up',
-  dividendYieldBruto: 'up',
   lucroLiquidoEstimado: 'up',
   payoutEsperado: 'up',
   cagrLucros5Anos: 'up',

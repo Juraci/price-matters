@@ -86,7 +86,7 @@ const tableRows = computed<TableRow[]>(() =>
       lucroPorAcaoEstimado: derived?.lucroPorAcaoEstimado ?? 0,
       payoutEsperado: snap?.payoutEsperado ?? 0,
       dividendoPorAcaoBruto: derived?.dividendoPorAcaoBruto ?? 0,
-      dividendYieldBruto: snap?.dividendYieldBruto ?? 0,
+      dividendYieldBruto: derived?.dividendYieldBruto ?? 0,
       cotacaoAtual: ticker.cotacaoAtual ?? 0,
       precoTeto: snap?.precoTeto ?? 0,
       margemSeguranca: derived?.margemSeguranca ?? 0,
