@@ -179,7 +179,7 @@ describe('useTickerStore', () => {
     expect(d.plProjetado).toBeCloseTo(31.105, 3);
     expect(d.margemSeguranca).toBeCloseTo(23.1975, 3);
     expect(d.dividendoPorAcaoBruto).toBe(1);
-    expect(d.dividendYieldBruto).toBeCloseTo(1.6074, 3);
+    expect(d.dividendYieldBruto).toBe(1.61);
     expect(d.valorDeMercado).toBe(6221000);
   });
 

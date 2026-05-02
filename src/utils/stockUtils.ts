@@ -42,7 +42,7 @@ export function computeDerived(snapshot: TickerSnapshot, cotacaoAtual: number): 
   const plProjetado = lucroPorAcaoEstimado === 0 ? 0 : cotacaoAtual / lucroPorAcaoEstimado;
   const dividendoPorAcaoBruto = (payoutEsperado / 100) * lucroPorAcaoEstimado;
   const dividendYieldBruto =
-    cotacaoAtual === 0 ? 0 : (dividendoPorAcaoBruto / cotacaoAtual) * 100;
+    cotacaoAtual === 0 ? 0 : Math.round((dividendoPorAcaoBruto / cotacaoAtual) * 10000) / 100;
   const valorDeMercado = quantidadeTotalAcoes * cotacaoAtual;
 
   return {
