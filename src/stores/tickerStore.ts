@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { DerivedMetrics, Ticker, TickerSnapshot } from '@/types/stock';
 import { computeDerived, snapshotsDiffer } from '@/utils/stockUtils';
+import { useConfigStore } from '@/stores/configStore';
 
 export const useTickerStore = defineStore(
   'ticker',
@@ -78,6 +79,17 @@ export const useTickerStore = defineStore(
     const allTickers = computed(() => Object.values(tickers.value));
     const activeTickers = computed(() => allTickers.value.filter((t) => t.status === 'active'));
 
+    // Narrows allTickers by configStore.tickerFilter (independent of status). When the filter
+    // is empty the reference to allTickers is returned unchanged — keeps existing callers
+    // semantically identical to today.
+    const filteredTickers = computed<Ticker[]>(() => {
+      const config = useConfigStore();
+      if (!config.isTickerFilterActive) return allTickers.value;
+      const allow = new Set(config.tickerFilter);
+      return allTickers.value.filter((t) => allow.has(t.codigo));
+    });
+    const filteredCodigos = computed(() => filteredTickers.value.map((t) => t.codigo));
+
     function reset(): void {
       tickers.value = {};
       lastFetchedAt.value = null;
@@ -94,6 +106,8 @@ export const useTickerStore = defineStore(
       getDerived,
       allTickers,
       activeTickers,
+      filteredTickers,
+      filteredCodigos,
       reset,
     };
   },

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useTickerStore } from '../tickerStore';
+import { useConfigStore } from '../configStore';
 import type { TickerSnapshot } from '@/types/stock';
 
 function makeSnapshot(overrides: Partial<TickerSnapshot> = {}): TickerSnapshot {
@@ -199,5 +200,55 @@ describe('useTickerStore', () => {
   it('getDerived returns undefined for unknown ticker', () => {
     const store = useTickerStore();
     expect(store.getDerived('MISSING')).toBeUndefined();
+  });
+
+  describe('filteredTickers / filteredCodigos', () => {
+    it('returns all tickers when tickerFilter is empty', () => {
+      const store = useTickerStore();
+      store.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+      store.upsertTicker('ANOT4', 'AnotherCo', makeSnapshot(), 10);
+      expect(store.filteredTickers.map((t) => t.codigo).sort()).toEqual(['ANOT4', 'TEST3']);
+      expect(store.filteredCodigos.sort()).toEqual(['ANOT4', 'TEST3']);
+    });
+
+    it('narrows to tickers whose codigo is in the filter', () => {
+      const store = useTickerStore();
+      const config = useConfigStore();
+      store.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+      store.upsertTicker('ANOT4', 'AnotherCo', makeSnapshot(), 10);
+      store.upsertTicker('THRD5', 'ThirdCo', makeSnapshot(), 10);
+      config.setTickerFilter(['TEST3', 'THRD5']);
+      expect(store.filteredTickers.map((t) => t.codigo).sort()).toEqual(['TEST3', 'THRD5']);
+      expect(store.filteredCodigos.sort()).toEqual(['TEST3', 'THRD5']);
+    });
+
+    it('includes tickers with status="removed" when explicitly listed in the filter', () => {
+      const store = useTickerStore();
+      const config = useConfigStore();
+      store.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+      store.upsertTicker('ANOT4', 'AnotherCo', makeSnapshot(), 10);
+      store.markRemovedIfNotIn(new Set(['TEST3']));
+      expect(store.tickers['ANOT4']!.status).toBe('removed');
+      config.setTickerFilter(['ANOT4']);
+      expect(store.filteredTickers.map((t) => t.codigo)).toEqual(['ANOT4']);
+    });
+
+    it('silently drops codigos in the filter that are not in the imported tickers', () => {
+      const store = useTickerStore();
+      const config = useConfigStore();
+      store.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+      config.setTickerFilter(['XXX3', 'TEST3']);
+      expect(store.filteredTickers.map((t) => t.codigo)).toEqual(['TEST3']);
+      expect(store.filteredCodigos).toEqual(['TEST3']);
+    });
+
+    it('returns [] when the filter narrows to zero matches', () => {
+      const store = useTickerStore();
+      const config = useConfigStore();
+      store.upsertTicker('TEST3', 'TestCo', makeSnapshot(), 10);
+      config.setTickerFilter(['XXX3']);
+      expect(store.filteredTickers).toEqual([]);
+      expect(store.filteredCodigos).toEqual([]);
+    });
   });
 });

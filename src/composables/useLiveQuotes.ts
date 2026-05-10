@@ -16,7 +16,7 @@ export function useLiveQuotes() {
       lastError.value = 'Brapi API key is not configured. Open Settings to add one.';
       return;
     }
-    const codigos = tickerStore.allTickers.map((t) => t.codigo);
+    const codigos = tickerStore.filteredCodigos;
     if (codigos.length === 0) return;
 
     isFetching.value = true;

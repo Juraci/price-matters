@@ -128,4 +128,33 @@ describe('useLiveQuotes', () => {
     await api.refresh();
     expect(fetchQuotesMock).not.toHaveBeenCalled();
   });
+
+  it('requests only filtered codigos when configStore.tickerFilter is active', async () => {
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('PETR4', 'Petrobras', makeSnapshot(), 30);
+    tickerStore.upsertTicker('VALE3', 'Vale', makeSnapshot(), 60);
+    tickerStore.upsertTicker('ITUB3', 'Itau', makeSnapshot(), 40);
+    useConfigStore().setTickerFilter(['PETR4', 'ITUB3']);
+
+    fetchQuotesMock.mockResolvedValue({ PETR4: 38.5, ITUB3: 41.2 });
+
+    const api = mountHost();
+    await api.refresh();
+
+    expect(fetchQuotesMock).toHaveBeenCalledTimes(1);
+    expect(fetchQuotesMock).toHaveBeenCalledWith(['PETR4', 'ITUB3'], 'test-key');
+  });
+
+  it('requests every imported codigo when the filter is empty', async () => {
+    const tickerStore = useTickerStore();
+    tickerStore.upsertTicker('PETR4', 'Petrobras', makeSnapshot(), 30);
+    tickerStore.upsertTicker('VALE3', 'Vale', makeSnapshot(), 60);
+
+    fetchQuotesMock.mockResolvedValue({ PETR4: 38.5, VALE3: 72.1 });
+
+    const api = mountHost();
+    await api.refresh();
+
+    expect(fetchQuotesMock).toHaveBeenCalledWith(['PETR4', 'VALE3'], 'test-key');
+  });
 });

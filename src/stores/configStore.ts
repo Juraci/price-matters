@@ -110,6 +110,23 @@ export function buildDefaultStockTableFilters(): DataTableFilterMeta {
   return filters;
 }
 
+function normalizeTickerFilter(raw: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    const norm = item.trim().toUpperCase();
+    if (norm.length === 0) continue;
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+    out.push(norm);
+  }
+  return out;
+}
+
+export function parseTickerFilterInput(raw: string): string[] {
+  return normalizeTickerFilter(raw.split(','));
+}
+
 export const useConfigStore = defineStore(
   'config',
   () => {
@@ -118,12 +135,15 @@ export const useConfigStore = defineStore(
     const stockTableSortField = ref<string>('empresaNome');
     const stockTableSortOrder = ref<number | undefined>(1);
     const stockTableFilters = ref<DataTableFilterMeta>(buildDefaultStockTableFilters());
+    const tickerFilter = ref<string[]>([]);
 
     const isStockColumnVisible = computed(
       () => (field: string) => stockTableVisibleColumns.value.includes(field),
     );
 
     const isBrapiConfigured = computed(() => brapiApiKey.value.trim().length > 0);
+
+    const isTickerFilterActive = computed(() => tickerFilter.value.length > 0);
 
     function setStockTableVisibleColumns(fields: string[]): void {
       stockTableVisibleColumns.value = fields;
@@ -146,19 +166,26 @@ export const useConfigStore = defineStore(
       stockTableFilters.value = buildDefaultStockTableFilters();
     }
 
+    function setTickerFilter(codigos: string[]): void {
+      tickerFilter.value = normalizeTickerFilter(codigos);
+    }
+
     return {
       stockTableVisibleColumns,
       brapiApiKey,
       stockTableSortField,
       stockTableSortOrder,
       stockTableFilters,
+      tickerFilter,
       isStockColumnVisible,
       isBrapiConfigured,
+      isTickerFilterActive,
       setStockTableVisibleColumns,
       setBrapiApiKey,
       setStockTableSort,
       setStockTableFilters,
       resetStockTableFilters,
+      setTickerFilter,
     };
   },
   { persist: true },

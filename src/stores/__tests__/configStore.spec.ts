@@ -5,6 +5,7 @@ import {
   STOCK_FILTERABLE_COLUMNS,
   STOCK_TOGGLEABLE_COLUMNS,
   buildDefaultStockTableFilters,
+  parseTickerFilterInput,
   useConfigStore,
 } from '../configStore';
 
@@ -120,5 +121,53 @@ describe('useConfigStore', () => {
     expect(Object.keys(store.stockTableFilters).sort()).toEqual(
       STOCK_FILTERABLE_COLUMNS.map((c) => c.field).sort(),
     );
+  });
+
+  describe('parseTickerFilterInput', () => {
+    it('splits on comma, trims, and uppercases each entry', () => {
+      expect(parseTickerFilterInput('KLBN4, ITUB3')).toEqual(['KLBN4', 'ITUB3']);
+      expect(parseTickerFilterInput('  klbn4 , itub3  ')).toEqual(['KLBN4', 'ITUB3']);
+    });
+
+    it('dedupes after normalization (case-insensitive)', () => {
+      expect(parseTickerFilterInput('KLBN4, klbn4, KLBN4, ITUB3')).toEqual(['KLBN4', 'ITUB3']);
+    });
+
+    it('drops empty entries from trailing/leading/repeated commas', () => {
+      expect(parseTickerFilterInput('  ,  ,')).toEqual([]);
+      expect(parseTickerFilterInput(',KLBN4,,ITUB3,')).toEqual(['KLBN4', 'ITUB3']);
+    });
+
+    it('returns [] for empty string', () => {
+      expect(parseTickerFilterInput('')).toEqual([]);
+    });
+
+    it('returns a single entry when input has no comma', () => {
+      expect(parseTickerFilterInput('klbn4')).toEqual(['KLBN4']);
+    });
+  });
+
+  describe('tickerFilter', () => {
+    it('defaults to empty array and isTickerFilterActive is false', () => {
+      const store = useConfigStore();
+      expect(store.tickerFilter).toEqual([]);
+      expect(store.isTickerFilterActive).toBe(false);
+    });
+
+    it('setTickerFilter normalizes (uppercase + trim + dedupe + drop empty)', () => {
+      const store = useConfigStore();
+      store.setTickerFilter(['klbn4', '  ITUB3  ', 'KLBN4', '']);
+      expect(store.tickerFilter).toEqual(['KLBN4', 'ITUB3']);
+      expect(store.isTickerFilterActive).toBe(true);
+    });
+
+    it('setTickerFilter([]) clears the filter and toggles isTickerFilterActive off', () => {
+      const store = useConfigStore();
+      store.setTickerFilter(['KLBN4']);
+      expect(store.isTickerFilterActive).toBe(true);
+      store.setTickerFilter([]);
+      expect(store.tickerFilter).toEqual([]);
+      expect(store.isTickerFilterActive).toBe(false);
+    });
   });
 });

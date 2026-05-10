@@ -4,18 +4,25 @@ import Button from 'primevue/button';
 import Popover from 'primevue/popover';
 import Drawer from 'primevue/drawer';
 import Password from 'primevue/password';
-import { useConfigStore } from '@/stores/configStore';
+import InputText from 'primevue/inputtext';
+import { parseTickerFilterInput, useConfigStore } from '@/stores/configStore';
+import { useTickerStore } from '@/stores/tickerStore';
 import { useIsMobile } from '@/composables/useIsMobile';
 
 const configStore = useConfigStore();
+const tickerStore = useTickerStore();
 const { isMobile } = useIsMobile();
 
 const popover = ref<InstanceType<typeof Popover> | null>(null);
 const drawerVisible = ref(false);
 const apiKeyInput = ref<string>('');
+const tickerFilterInput = ref<string>('');
+const missingCodigos = ref<string[]>([]);
 
 function toggle(event: Event): void {
   apiKeyInput.value = configStore.brapiApiKey;
+  tickerFilterInput.value = configStore.tickerFilter.join(', ');
+  missingCodigos.value = [];
   if (isMobile.value) {
     drawerVisible.value = true;
   } else {
@@ -25,6 +32,10 @@ function toggle(event: Event): void {
 
 function save(): void {
   configStore.setBrapiApiKey(apiKeyInput.value);
+  const parsed = parseTickerFilterInput(tickerFilterInput.value);
+  missingCodigos.value = parsed.filter((codigo) => !tickerStore.tickers[codigo]);
+  configStore.setTickerFilter(parsed);
+  if (missingCodigos.value.length > 0) return;
   drawerVisible.value = false;
   popover.value?.hide();
 }
@@ -32,6 +43,9 @@ function save(): void {
 function clear(): void {
   apiKeyInput.value = '';
   configStore.setBrapiApiKey('');
+  tickerFilterInput.value = '';
+  configStore.setTickerFilter([]);
+  missingCodigos.value = [];
 }
 </script>
 
@@ -72,6 +86,27 @@ function clear(): void {
           </small>
         </div>
 
+        <div class="field">
+          <label for="ticker-filter-mobile">Filtro de tickers</label>
+          <InputText
+            id="ticker-filter-mobile"
+            v-model="tickerFilterInput"
+            placeholder="KLBN4, ITUB3"
+            fluid
+            data-testid="settings-ticker-filter"
+          />
+          <small class="help">
+            Liste códigos separados por vírgula. Deixe vazio para mostrar todos.
+          </small>
+          <small
+            v-if="missingCodigos.length > 0"
+            class="error"
+            data-testid="settings-ticker-filter-error"
+          >
+            Tickers não encontrados: {{ missingCodigos.join(', ') }}
+          </small>
+        </div>
+
         <div class="actions">
           <Button
             label="Limpar"
@@ -103,6 +138,27 @@ function clear(): void {
           <small class="help">
             Obtenha uma chave gratuita em
             <a href="https://brapi.dev" target="_blank" rel="noopener">brapi.dev</a>.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="ticker-filter">Filtro de tickers</label>
+          <InputText
+            id="ticker-filter"
+            v-model="tickerFilterInput"
+            placeholder="KLBN4, ITUB3"
+            fluid
+            data-testid="settings-ticker-filter"
+          />
+          <small class="help">
+            Liste códigos separados por vírgula. Deixe vazio para mostrar todos.
+          </small>
+          <small
+            v-if="missingCodigos.length > 0"
+            class="error"
+            data-testid="settings-ticker-filter-error"
+          >
+            Tickers não encontrados: {{ missingCodigos.join(', ') }}
           </small>
         </div>
 
@@ -159,6 +215,12 @@ function clear(): void {
 .help {
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
+}
+
+.error {
+  font-size: 0.75rem;
+  color: var(--p-red-500, #ef4444);
+  font-weight: 500;
 }
 
 .actions {

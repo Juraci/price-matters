@@ -66,7 +66,7 @@ interface TableRow {
 }
 
 const tableRows = computed<TableRow[]>(() =>
-  tickerStore.allTickers.map((ticker) => {
+  tickerStore.filteredTickers.map((ticker) => {
     const snap = tickerStore.getLatestSnapshot(ticker.codigo);
     const derived = tickerStore.getDerived(ticker.codigo);
     return {
