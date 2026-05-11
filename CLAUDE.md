@@ -12,66 +12,44 @@ npm run test:e2e     # run Playwright E2E tests (auto-starts dev server)
 npm run lint         # oxlint + eslint with auto-fix
 ```
 
-Run a single unit test file:
-```bash
-npx vitest run src/components/__tests__/CsvImport.spec.ts
-```
+Run a single unit test file: `npx vitest run src/components/__tests__/CsvImport.spec.ts`
 
-Run E2E tests headed (visible browser):
-```bash
-npm run test:e2e:headed
-```
+Run E2E tests headed (visible browser): `npm run test:e2e:headed`
 
-## Architecture
+## Project documentation
 
-This is a single-page Vue 3 + TypeScript app for tracking Brazilian stock (ticker) data across multiple CSV imports. There is one route (`/`) rendered by `HomeView`.
+This is a single-page Vue 3 + TypeScript app for tracking Brazilian stock (ticker) data across multiple CSV imports. There is one route (`/`) rendered by `HomeView`. Detailed analysis lives in `.specs/codebase/` — load only what you need:
 
-### Data flow
+- [`.specs/codebase/STACK.md`](.specs/codebase/STACK.md) — tech stack, versions, dependency manifest.
+- [`.specs/codebase/STRUCTURE.md`](.specs/codebase/STRUCTURE.md) — directory tree, where things live per capability.
+- [`.specs/codebase/ARCHITECTURE.md`](.specs/codebase/ARCHITECTURE.md) — data-flow diagrams (CSV import, live-quote refresh, snapshot diff), identified patterns (snapshot history with selective change detection, live `cotacaoAtual` separated from immutable `TickerSnapshot`, derived metrics as pure functions, soft-delete via `status`, `configStore` survives data reset).
+- [`.specs/codebase/CONVENTIONS.md`](.specs/codebase/CONVENTIONS.md) — naming, code organization, type safety (`noUncheckedIndexedAccess`), error handling (throw-at-boundary), comment style.
+- [`.specs/codebase/TESTING.md`](.specs/codebase/TESTING.md) — Vitest + Playwright patterns, gate-check commands, test coverage matrix.
+- [`.specs/codebase/INTEGRATIONS.md`](.specs/codebase/INTEGRATIONS.md) — brapi.dev client, `localStorage` persistence, CI.
+- [`.specs/codebase/CONCERNS.md`](.specs/codebase/CONCERNS.md) — known tech debt, fragile areas, test gaps. Consult before modifying flagged components.
 
-```
-CSV file → parseCsv() → importStore.importCsv()
-                              ├─ empresaStore.ensureEmpresa()
-                              └─ tickerStore.upsertTicker(codigo, nome, snapshot, cotacaoAtualFromCsv)
+Feature specs (one per feature) live under `.specs/features/<feature>/` (`spec.md`, optional `tasks.md`, `validation.md`).
 
-Refresh button → useLiveQuotes().refresh() → brapiClient.fetchQuotes()
-                                                   └─ tickerStore.setLiveQuote()
-```
+## Must-know guardrails
 
-- **`src/utils/csvParser.ts`**: Parses the proprietary CSV format. The header row is detected by searching for a line starting with `"Empresa"`. Columns are mapped by fixed index positions. `cotacaoAtual` is emitted at the top level of `ParsedCsvRow`, not inside the snapshot.
-- **`src/utils/stockUtils.ts`**: `snapshotsDiffer()` defines which fields constitute a meaningful change (controls whether importing the same CSV again creates a new snapshot or is treated as "unchanged"). `computeDerived(snapshot, cotacaoAtual)` takes the current price as a second argument — derived metrics are recomputed reactively whenever `ticker.cotacaoAtual` changes. Also contains `slugify()` used as the empresa key.
-- **`src/types/stock.ts`**: All shared types. **`cotacaoAtual` lives on `Ticker` (not `TickerSnapshot`)** along with `cotacaoFetchedAt` — the current price is live, never historical. Snapshots are immutable history.
+Repeated here because they are easy to regress and a quick reference saves a round-trip to the linked doc.
 
-### Stores (Pinia, all with `persist: true`)
+- **Do not reintroduce the `brapi` npm SDK.** `src/services/brapiClient.ts` uses plain `fetch`; the SDK adds `X-Stainless-*` headers that trip brapi.dev's CORS preflight. Token must stay in the query string, not a header. Rationale: [`INTEGRATIONS.md` § Stock Quote API](.specs/codebase/INTEGRATIONS.md#stock-quote-api).
+- **PrimeFlex is NOT installed.** No utility classes (`flex`, `gap-2`, `align-items-center`). Write scoped CSS in `<style scoped>`; use `:deep()` to target PrimeVue-generated DOM. Rationale: [`STACK.md` § Frontend](.specs/codebase/STACK.md#frontend).
+- **Manual live-quote refresh only — no polling.** [`INTEGRATIONS.md` § Background Jobs](.specs/codebase/INTEGRATIONS.md#background-jobs).
+- **`configStore` is NOT reset with the data stores.** It holds user preferences (column visibility, sort/filter, brapi key, ticker filter) that must survive `Limpar dados`. Don't add `configStore.reset()` to `CsvImport.handleReset`. [`ARCHITECTURE.md` § configStore survives data reset](.specs/codebase/ARCHITECTURE.md#configstore-survives-data-reset).
+- **`cotacaoAtual` lives on `Ticker`, NOT on `TickerSnapshot`.** Snapshots are immutable history; the current price is live. `TickerHistoryDialog` therefore shows snapshot fields only — it does NOT display `margemSeguranca` or `plProjetado` because those require `cotacaoAtual`. [`ARCHITECTURE.md` § Live price separated from historical snapshots](.specs/codebase/ARCHITECTURE.md#live-price-separated-from-historical-snapshots).
 
-Data stores (reset together on "reset" action): `importStore.reset()`, `empresaStore.reset()`, `tickerStore.reset()`.
+## Extending the stock table
 
-`configStore` is **not** reset with the data stores — it holds user preferences that should survive a data wipe.
+Two task-oriented recipes that span multiple files. Keep these inline because they are the *how-to* for the most common changes to this codebase.
 
-- **`tickerStore`**: Primary store. Keyed by ticker code (`Record<string, Ticker>`). Each `Ticker` holds `history: TickerSnapshot[]` plus live `cotacaoAtual?: number` + `cotacaoFetchedAt?: string`.
-  - `upsertTicker(codigo, nome, snapshot, cotacaoAtualFromCsv)` returns `'new' | 'updated' | 'unchanged'`. On a new ticker the CSV price seeds `cotacaoAtual`; on existing tickers the CSV price is only used when `cotacaoAtual` is still `undefined` (never clobbers a live quote).
-  - `setLiveQuote(codigo, price, fetchedAt)`: updates the live price after a brapi fetch. No-op for unknown codigos.
-  - `getDerived(codigo)`: computes derived metrics using the latest snapshot + current `ticker.cotacaoAtual`.
-  - `markRemovedIfNotIn()` sets status to `'removed'` for tickers absent from the latest import.
-- **`empresaStore`**: Tracks companies (`Empresa`) and their associated ticker codes. Keyed by slugified company name.
-- **`importStore`**: Records import batches with stats. Orchestrates the CSV import pipeline.
-- **`configStore`**: UI preferences. Holds `stockTableVisibleColumns: string[]` (drives the column toggle) and exports `STOCK_TOGGLEABLE_COLUMNS` — the list of fields that can be toggled. Pinned columns (Código, Cotação, Preço Teto, Margem, Histórico) are not in that list and render unconditionally. Also persists table sort state (`stockTableSortField`, `stockTableSortOrder`) and per-column advanced filter state (`stockTableFilters`); the filterable fields and their default match modes live in `STOCK_FILTERABLE_COLUMNS` + `buildDefaultStockTableFilters()`.
+- **Adding a toggleable column**: append `{ field, header }` to `STOCK_TOGGLEABLE_COLUMNS` in `src/stores/configStore.ts` **and** add the corresponding `<Column v-if="configStore.isStockColumnVisible('field')">` in `src/components/StockDataTable.vue`. The two must stay in sync by `field`. Pinned columns (Código, Cotação, Preço Teto, Margem, Histórico) are intentionally NOT in that list and render unconditionally.
+- **Adding a filterable column**: append `{ field, kind }` to `STOCK_FILTERABLE_COLUMNS` in `src/stores/configStore.ts` (`kind` = `'text' | 'numeric' | 'enum'`) **and** mark the `<Column filter ...>` in the template plus a `#filter` slot — `InputText` for text, `InputNumber` for numeric, `Select` for enum. PrimeVue 4 menu-mode filters render nothing without the slot, so it is mandatory. Filter constants come from `@primevue/core/api` (`FilterMatchMode`, `FilterOperator`).
 
-### Live quotes (brapi.dev)
+## E2E gotchas worth surfacing
 
-- **`src/services/brapiClient.ts`**: Uses plain `fetch` against `https://brapi.dev/api/quote/{codigo}?interval=1d&token=...`. **Do not reintroduce the `brapi` npm SDK** — it adds `X-Stainless-*` telemetry headers that trip brapi.dev's CORS preflight. Token goes in the query string, not a header, to keep the request a simple CORS GET.
-- **Per-ticker requests**: brapi's free tier allows only one ticker per `/api/quote/` call. `fetchQuotes(codigos[])` fans out one request per ticker via `Promise.allSettled`. A single failure silently skips that ticker, and the caller keeps the previous price (no partial-response error propagation).
-- **`src/composables/useLiveQuotes.ts`**: Exposes `refresh()`, `lastFetchedAt`, `isFetching`, `lastError`. **Manual refresh only — no polling.** Mounted in `StockDataTable.vue`.
-- **API key storage**: The brapi token is entered by the user via the settings popover (`SettingsPopover.vue`, mounted in `StockDataTable.vue`'s table header) and persisted in `configStore.brapiApiKey`. Since `configStore` has `persist: true`, the key survives reloads and is NOT cleared by the data `reset()` action. `useLiveQuotes.refresh()` reads the key from the store and passes it to `fetchQuotes(codigos, apiKey)`; when the key is empty, `refresh()` sets `lastError` and skips the network call. **There is no env var** — E2E tests seed the key by writing `localStorage.setItem('config', JSON.stringify({ brapiApiKey: 'test-key' }))` via `page.addInitScript` before navigation.
+Two non-obvious patterns. Full E2E conventions are in [`TESTING.md` § E2E tests](.specs/codebase/TESTING.md#e2e-tests).
 
-### UI (PrimeVue 4 + Aura theme)
-
-PrimeVue is the only UI library. **PrimeFlex is not installed** — do not use PrimeFlex utility classes (`flex`, `gap-2`, `align-items-center`, etc.). Use scoped CSS in `<style scoped>` blocks instead. For styles targeting PrimeVue-generated elements (e.g., DataTable rows), use `:deep()`.
-
-- **Column toggle** (`StockDataTable.vue`): The table's `#header` slot renders a `MultiSelect` bound to `configStore`. Each toggleable `<Column>` is wrapped in `v-if="configStore.isStockColumnVisible('field')"`. To add a new toggleable column: append `{ field, header }` to `STOCK_TOGGLEABLE_COLUMNS` in `configStore.ts` **and** add the corresponding `<Column v-if="...">` in the template — the two must stay in sync by `field`.
-- **Sort & filters** (`StockDataTable.vue`): The DataTable uses `v-model:sortField` / `v-model:sortOrder` / `v-model:filters` bound to `configStore`, with `filterDisplay="menu"` for the per-column advanced filter popup. Adding a new filterable column requires (a) appending it to `STOCK_FILTERABLE_COLUMNS` in `configStore.ts` with the right `kind` (`text` | `numeric` | `enum`) and (b) marking the `<Column filter ...>` in the template plus a `#filter` slot — `InputText` for text, `InputNumber` for numeric, `Select` for enum. PrimeVue 4's menu-mode filter renders nothing without the slot, so it is mandatory. Filter constants come from `@primevue/core/api` (`FilterMatchMode`, `FilterOperator`).
-- **TickerHistoryDialog** shows snapshot fields only (`precoTeto`, `dividendYieldBruto`, `lucroLiquidoEstimado`). It does **not** show `margemSeguranca` or `plProjetado` because those require `cotacaoAtual`, which is no longer stored historically.
-
-### Testing conventions
-
-- **Unit tests** (Vitest): use `mount` (not `shallowMount`). Component tests require `PrimeVue` and an active Pinia in `global.plugins`. Composables that use lifecycle hooks are tested by mounting a host component that calls them and exposes their return value via `expose(api)`.
-- **E2E tests** (Playwright): use `page.locator` with `data-testid` attributes. The dev server is started automatically by Playwright. `setInputFiles` works on hidden file inputs without `{ force: true }`. For live-quote tests, mock brapi at the HTTP layer: `page.route('**/api/quote/**', ...)` with `body: JSON.stringify({ results: [...] })` (object literals will silently break — `fulfill` needs a string). The mock should read the ticker code from `route.request().url()` path and return a single-result response tailored to that symbol, because the client hits the endpoint once per ticker.
+- **brapi mock body must be a string**: `route.fulfill({ body: JSON.stringify({ results: [...] }) })`. Passing an object literal silently breaks the response. The mock reads the ticker code from `route.request().url()` because the client hits the endpoint once per ticker.
+- **Seeding the brapi key**: write `localStorage.config` via `page.addInitScript` BEFORE navigation. If the test also reloads mid-test (e.g., to verify persistence), use a conditional seed (`if (!localStorage.getItem('config')) ...`) so the script doesn't clobber state the test just persisted. Full patterns in `e2e/liveQuotes.spec.ts` and `e2e/tickerFilter.spec.ts`.
