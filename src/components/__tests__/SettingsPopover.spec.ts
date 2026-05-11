@@ -135,7 +135,10 @@ describe('SettingsPopover', () => {
       const filterInput = document.querySelector<HTMLInputElement>(
         '[data-testid="settings-ticker-filter"]',
       );
-      filterInput!.value = 'XXX3, ITUB3, YYY4';
+      // Imaginary missing codes must satisfy the strict format rule
+      // (^[a-zA-Z]{4}[0-9]{1,2}$) so we exercise the missing-codigos branch
+      // rather than the format-error gate.
+      filterInput!.value = 'ZZZZ3, ITUB3, YYYY4';
       filterInput!.dispatchEvent(new Event('input'));
       await flushPromises();
 
@@ -147,10 +150,10 @@ describe('SettingsPopover', () => {
       );
       expect(errorEl).not.toBeNull();
       expect(errorEl!.textContent).toContain('Tickers não encontrados');
-      expect(errorEl!.textContent).toContain('XXX3');
-      expect(errorEl!.textContent).toContain('YYY4');
+      expect(errorEl!.textContent).toContain('ZZZZ3');
+      expect(errorEl!.textContent).toContain('YYYY4');
       expect(errorEl!.textContent).not.toContain('ITUB3');
-      expect(config.tickerFilter).toEqual(['XXX3', 'ITUB3', 'YYY4']);
+      expect(config.tickerFilter).toEqual(['ZZZZ3', 'ITUB3', 'YYYY4']);
 
       wrapper.unmount();
     });
@@ -166,7 +169,7 @@ describe('SettingsPopover', () => {
       const filterInput = document.querySelector<HTMLInputElement>(
         '[data-testid="settings-ticker-filter"]',
       );
-      filterInput!.value = 'XXX3, ITUB3';
+      filterInput!.value = 'ZZZZ3, ITUB3';
       filterInput!.dispatchEvent(new Event('input'));
       await flushPromises();
       document.querySelector<HTMLButtonElement>('[data-testid="settings-save"]')!.click();
@@ -197,7 +200,7 @@ describe('SettingsPopover', () => {
       const filterInput = document.querySelector<HTMLInputElement>(
         '[data-testid="settings-ticker-filter"]',
       );
-      filterInput!.value = 'XXX3';
+      filterInput!.value = 'ZZZZ3';
       filterInput!.dispatchEvent(new Event('input'));
       await flushPromises();
       document.querySelector<HTMLButtonElement>('[data-testid="settings-save"]')!.click();
@@ -226,6 +229,123 @@ describe('SettingsPopover', () => {
         '[data-testid="settings-ticker-filter"]',
       );
       expect(filterInput!.value).toBe('KLBN4, ITUB3');
+
+      wrapper.unmount();
+    });
+  });
+
+  describe('ticker filter format validation', () => {
+    it('shows "Formato inválido" below the field after blur with invalid input', async () => {
+      const wrapper = mountComponent();
+      await wrapper.find('[data-testid="settings-trigger"]').trigger('click');
+      await flushPromises();
+
+      const filterInput = document.querySelector<HTMLInputElement>(
+        '[data-testid="settings-ticker-filter"]',
+      );
+      filterInput!.value = 'KLBN4; ITUB3';
+      filterInput!.dispatchEvent(new Event('input'));
+      filterInput!.dispatchEvent(new Event('blur'));
+      await flushPromises();
+
+      const formatErr = document.querySelector<HTMLElement>(
+        '[data-testid="settings-ticker-filter-format-error"]',
+      );
+      expect(formatErr).not.toBeNull();
+      expect(formatErr!.textContent).toContain('Formato inválido');
+
+      wrapper.unmount();
+    });
+
+    it('save with invalid format is a no-op (does not modify configStore.tickerFilter)', async () => {
+      const tickerStore = useTickerStore();
+      tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot(), 4);
+      const config = useConfigStore();
+      config.setTickerFilter(['KLBN4']);
+
+      const wrapper = mountComponent();
+      await wrapper.find('[data-testid="settings-trigger"]').trigger('click');
+      await flushPromises();
+
+      const filterInput = document.querySelector<HTMLInputElement>(
+        '[data-testid="settings-ticker-filter"]',
+      );
+      filterInput!.value = 'KLBN4; ITUB3';
+      filterInput!.dispatchEvent(new Event('input'));
+      await flushPromises();
+      document.querySelector<HTMLButtonElement>('[data-testid="settings-save"]')!.click();
+      await flushPromises();
+
+      // No-op: persisted filter unchanged
+      expect(config.tickerFilter).toEqual(['KLBN4']);
+      // Format error visible (save also surfaces it, regardless of blur)
+      expect(
+        document.querySelector('[data-testid="settings-ticker-filter-format-error"]'),
+      ).not.toBeNull();
+      // No "missing codigos" message since parsing was skipped
+      expect(document.querySelector('[data-testid="settings-ticker-filter-error"]')).toBeNull();
+
+      wrapper.unmount();
+    });
+
+    it('clears the format error on the next input event (live feedback)', async () => {
+      const wrapper = mountComponent();
+      await wrapper.find('[data-testid="settings-trigger"]').trigger('click');
+      await flushPromises();
+
+      const filterInput = document.querySelector<HTMLInputElement>(
+        '[data-testid="settings-ticker-filter"]',
+      );
+      filterInput!.value = 'KLBN4; ITUB3';
+      filterInput!.dispatchEvent(new Event('input'));
+      filterInput!.dispatchEvent(new Event('blur'));
+      await flushPromises();
+      expect(
+        document.querySelector('[data-testid="settings-ticker-filter-format-error"]'),
+      ).not.toBeNull();
+
+      filterInput!.value = 'KLBN4, ITUB3';
+      filterInput!.dispatchEvent(new Event('input'));
+      await flushPromises();
+
+      expect(
+        document.querySelector('[data-testid="settings-ticker-filter-format-error"]'),
+      ).toBeNull();
+
+      wrapper.unmount();
+    });
+
+    it('fixing the input and saving applies the filter normally', async () => {
+      const tickerStore = useTickerStore();
+      tickerStore.upsertTicker('KLBN4', 'Klabin', makeSnapshot(), 4);
+      tickerStore.upsertTicker('ITUB3', 'Itau', makeSnapshot(), 30);
+      const config = useConfigStore();
+
+      const wrapper = mountComponent();
+      await wrapper.find('[data-testid="settings-trigger"]').trigger('click');
+      await flushPromises();
+
+      const filterInput = document.querySelector<HTMLInputElement>(
+        '[data-testid="settings-ticker-filter"]',
+      );
+      filterInput!.value = 'KLBN4; ITUB3';
+      filterInput!.dispatchEvent(new Event('input'));
+      filterInput!.dispatchEvent(new Event('blur'));
+      await flushPromises();
+      document.querySelector<HTMLButtonElement>('[data-testid="settings-save"]')!.click();
+      await flushPromises();
+      expect(config.tickerFilter).toEqual([]);
+
+      filterInput!.value = 'KLBN4, ITUB3';
+      filterInput!.dispatchEvent(new Event('input'));
+      await flushPromises();
+      document.querySelector<HTMLButtonElement>('[data-testid="settings-save"]')!.click();
+      await flushPromises();
+
+      expect(config.tickerFilter).toEqual(['KLBN4', 'ITUB3']);
+      expect(
+        document.querySelector('[data-testid="settings-ticker-filter-format-error"]'),
+      ).toBeNull();
 
       wrapper.unmount();
     });

@@ -5,6 +5,7 @@ import {
   STOCK_FILTERABLE_COLUMNS,
   STOCK_TOGGLEABLE_COLUMNS,
   buildDefaultStockTableFilters,
+  isValidTickerFilterFormat,
   parseTickerFilterInput,
   useConfigStore,
 } from '../configStore';
@@ -144,6 +145,58 @@ describe('useConfigStore', () => {
 
     it('returns a single entry when input has no comma', () => {
       expect(parseTickerFilterInput('klbn4')).toEqual(['KLBN4']);
+    });
+  });
+
+  describe('isValidTickerFilterFormat', () => {
+    it('accepts empty / whitespace-only input', () => {
+      expect(isValidTickerFilterFormat('')).toBe(true);
+      expect(isValidTickerFilterFormat('   ')).toBe(true);
+    });
+
+    it('accepts a single ticker with no separator', () => {
+      expect(isValidTickerFilterFormat('KLBN4')).toBe(true);
+      expect(isValidTickerFilterFormat('klbn4')).toBe(true);
+    });
+
+    it('accepts comma-separated tickers with optional surrounding whitespace', () => {
+      expect(isValidTickerFilterFormat('KLBN4, ITUB3')).toBe(true);
+      expect(isValidTickerFilterFormat('  KLBN4 ,  ITUB3  ')).toBe(true);
+      expect(isValidTickerFilterFormat('KLBN4,ITUB3')).toBe(true);
+    });
+
+    it('accepts tickers with a 2-digit suffix (e.g. ITUB11 / KLBN11)', () => {
+      expect(isValidTickerFilterFormat('ITUB11, KLBN11')).toBe(true);
+    });
+
+    it('rejects non-comma separators', () => {
+      expect(isValidTickerFilterFormat('KLBN4; ITUB3')).toBe(false);
+      expect(isValidTickerFilterFormat('KLBN4 ITUB3')).toBe(false);
+      expect(isValidTickerFilterFormat('KLBN4|ITUB3')).toBe(false);
+    });
+
+    it('rejects tickers with fewer/more than 4 letters', () => {
+      expect(isValidTickerFilterFormat('KLB4, ITUB3')).toBe(false);
+      expect(isValidTickerFilterFormat('KLBNB4, ITUB3')).toBe(false);
+    });
+
+    it('rejects tickers with no digit suffix', () => {
+      expect(isValidTickerFilterFormat('KLBN, ITUB3')).toBe(false);
+    });
+
+    it('rejects tickers with a 3+ digit suffix', () => {
+      expect(isValidTickerFilterFormat('KLBN4, ITUB123')).toBe(false);
+    });
+
+    it('rejects tickers with non-alphanumeric characters', () => {
+      expect(isValidTickerFilterFormat('KL-N4, ITUB3')).toBe(false);
+      expect(isValidTickerFilterFormat('KLBN4!, ITUB3')).toBe(false);
+    });
+
+    it('rejects trailing / leading / repeated commas', () => {
+      expect(isValidTickerFilterFormat('KLBN4,')).toBe(false);
+      expect(isValidTickerFilterFormat(',KLBN4')).toBe(false);
+      expect(isValidTickerFilterFormat('KLBN4,,ITUB3')).toBe(false);
     });
   });
 

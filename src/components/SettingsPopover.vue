@@ -5,7 +5,11 @@ import Popover from 'primevue/popover';
 import Drawer from 'primevue/drawer';
 import Password from 'primevue/password';
 import InputText from 'primevue/inputtext';
-import { parseTickerFilterInput, useConfigStore } from '@/stores/configStore';
+import {
+  isValidTickerFilterFormat,
+  parseTickerFilterInput,
+  useConfigStore,
+} from '@/stores/configStore';
 import { useTickerStore } from '@/stores/tickerStore';
 import { useIsMobile } from '@/composables/useIsMobile';
 
@@ -18,11 +22,13 @@ const drawerVisible = ref(false);
 const apiKeyInput = ref<string>('');
 const tickerFilterInput = ref<string>('');
 const missingCodigos = ref<string[]>([]);
+const formatError = ref<boolean>(false);
 
 function toggle(event: Event): void {
   apiKeyInput.value = configStore.brapiApiKey;
   tickerFilterInput.value = configStore.tickerFilter.join(', ');
   missingCodigos.value = [];
+  formatError.value = false;
   if (isMobile.value) {
     drawerVisible.value = true;
   } else {
@@ -30,8 +36,21 @@ function toggle(event: Event): void {
   }
 }
 
+function validateFormat(): void {
+  formatError.value = !isValidTickerFilterFormat(tickerFilterInput.value);
+}
+
+function onFilterInput(): void {
+  formatError.value = false;
+}
+
 function save(): void {
   configStore.setBrapiApiKey(apiKeyInput.value);
+  if (!isValidTickerFilterFormat(tickerFilterInput.value)) {
+    formatError.value = true;
+    return;
+  }
+  formatError.value = false;
   const parsed = parseTickerFilterInput(tickerFilterInput.value);
   missingCodigos.value = parsed.filter((codigo) => !tickerStore.tickers[codigo]);
   configStore.setTickerFilter(parsed);
@@ -46,6 +65,7 @@ function clear(): void {
   tickerFilterInput.value = '';
   configStore.setTickerFilter([]);
   missingCodigos.value = [];
+  formatError.value = false;
 }
 </script>
 
@@ -94,12 +114,17 @@ function clear(): void {
             placeholder="KLBN4, ITUB3"
             fluid
             data-testid="settings-ticker-filter"
+            @blur="validateFormat"
+            @input="onFilterInput"
           />
           <small class="help">
             Liste códigos separados por vírgula. Deixe vazio para mostrar todos.
           </small>
+          <small v-if="formatError" class="error" data-testid="settings-ticker-filter-format-error">
+            Formato inválido
+          </small>
           <small
-            v-if="missingCodigos.length > 0"
+            v-else-if="missingCodigos.length > 0"
             class="error"
             data-testid="settings-ticker-filter-error"
           >
@@ -149,12 +174,17 @@ function clear(): void {
             placeholder="KLBN4, ITUB3"
             fluid
             data-testid="settings-ticker-filter"
+            @blur="validateFormat"
+            @input="onFilterInput"
           />
           <small class="help">
             Liste códigos separados por vírgula. Deixe vazio para mostrar todos.
           </small>
+          <small v-if="formatError" class="error" data-testid="settings-ticker-filter-format-error">
+            Formato inválido
+          </small>
           <small
-            v-if="missingCodigos.length > 0"
+            v-else-if="missingCodigos.length > 0"
             class="error"
             data-testid="settings-ticker-filter-error"
           >

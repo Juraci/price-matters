@@ -1,6 +1,6 @@
 # Ticker Filter Validation
 
-**Date**: 2026-05-10
+**Date**: 2026-05-11 (updated with format-validation addition)
 **Spec**: `.specs/features/ticker-filter/spec.md`
 
 ---
@@ -46,8 +46,12 @@
 | FILT-13: Limpar clears filter (and brapi key) and hides the message                   | ✅ PASS  | `SettingsPopover.spec.ts` "Limpar resets the filter and hides the error"                |
 | FILT-14: Field pre-populated with persisted filter on open                            | ✅ PASS  | `SettingsPopover.spec.ts` "seeds the filter input with the current persisted filter on open" |
 | FILT-15: With no imports, every entered codigo is reported missing                    | ✅ PASS  | Implicitly covered — same code path as FILT-10 with empty `tickerStore.tickers`         |
+| FILT-16: Format-invalid input + blur → "Formato inválido" message visible             | ✅ PASS  | `SettingsPopover.spec.ts` "shows 'Formato inválido' below the field after blur with invalid input" + E2E format-error test |
+| FILT-17: Save with format-invalid input is a no-op (no store mutation, popover stays open) | ✅ PASS  | `SettingsPopover.spec.ts` "save with invalid format is a no-op …" + E2E (asserts localStorage.config.tickerFilter is []) |
+| FILT-18: Format error clears on next `input` event (live feedback)                    | ✅ PASS  | `SettingsPopover.spec.ts` "clears the format error on the next input event"             |
+| FILT-19: Fixing input + saving proceeds normally through existing save flow           | ✅ PASS  | `SettingsPopover.spec.ts` "fixing the input and saving applies the filter normally" + E2E recovery step |
 
-**Status**: ✅ P1 (Validate) Complete
+**Status**: ✅ P1 (Validate) Complete (including format-validation extension)
 
 ---
 
@@ -70,17 +74,17 @@
 - **Lint**: ✅ 0 warnings, 0 errors (oxlint + eslint)
 - **Type-check**: ✅ vue-tsc clean
 - **Format check**: ⚠️ 1 pre-existing warning in `.agents/.skill-lock.json` (skill-harness file, untracked, not part of this feature). All feature-touched files are properly formatted.
-- **Unit (Vitest)**: ✅ 120 passed (was 108 before feature → +12 new tests)
-  - `configStore.spec.ts`: 11 → 19 (+8)
+- **Unit (Vitest)**: ✅ 134 passed (was 108 before feature → +26 new tests)
+  - `configStore.spec.ts`: 11 → 29 (+18: +8 for tickerFilter, +10 for isValidTickerFilterFormat)
   - `tickerStore.spec.ts`: 22 → 27 (+5)
   - `useLiveQuotes.spec.ts`: 6 → 8 (+2)
-  - `SettingsPopover.spec.ts`: 3 → 8 (+5)
-  - Net +20 test cases added across 4 files; existing 108 still pass
+  - `SettingsPopover.spec.ts`: 3 → 12 (+9: +5 for filter UX, +4 for format validation)
+  - Net +34 test cases added across 4 files; existing 108 still pass; two old `SettingsPopover.spec.ts` tests had their imaginary missing-codigo strings updated (`XXX3`/`YYY4` → `ZZZZ3`/`YYYY4`) to satisfy the new strict format rule — assertions otherwise unchanged.
 - **Build**: ✅ vite build clean (897 kB main chunk — pre-existing chunk-size advisory, not introduced by this feature)
-- **E2E (Playwright chromium)**: ✅ 17 passed (was 14 before feature → +3 new)
-  - New `e2e/tickerFilter.spec.ts`: happy path, missing-ticker, reload persistence
-  - All 14 prior E2E tests still pass (no regression)
-- **Test count delta**: +12 unit tests, +3 E2E tests. None deleted, none skipped.
+- **E2E (Playwright chromium)**: ✅ 18 passed (was 14 before feature → +4 new)
+  - `e2e/tickerFilter.spec.ts`: happy path, missing-ticker (updated to use `ZZZZ3`), reload persistence, format-error scenario (`KLBN4; ITUB3` → error → no-op → fix → save).
+  - All 14 prior E2E tests still pass (no regression).
+- **Test count delta**: +26 unit tests, +4 E2E tests. None deleted, none skipped.
 
 ---
 
@@ -131,3 +135,9 @@
 1. Review the diff (`git diff`) and the new untracked file `e2e/tickerFilter.spec.ts`.
 2. Decide what to do with the pre-existing `.agents/.skill-lock.json` format issue (gitignore vs. format vs. ignore).
 3. Commit with a single `feat(filter): ...` per your stated preference, or split as you see fit.
+
+**2026-05-11 addendum — format-validation extension**:
+- Added `isValidTickerFilterFormat(raw: string)` to `configStore.ts` — strict validator: each entry must match `^[a-zA-Z]{4}[0-9]{1,2}$`, comma-only separator, no trailing/leading/repeated commas. Empty input is valid.
+- Wired into `SettingsPopover.vue`: input `@blur` triggers `validateFormat()`; input `@input` clears the format error live; `save()` is gated by the validator and is a no-op when invalid. The format-error message renders ABOVE the missing-codigos message (mutually exclusive via `v-if/v-else-if`).
+- Two pre-existing `SettingsPopover.spec.ts` tests had imaginary missing-codigo strings updated (`XXX3`/`YYY4` → `ZZZZ3`/`YYYY4`) to satisfy the new strict format rule; otherwise assertions unchanged. Same update applied to the missing-ticker E2E test.
+- 4 new component tests + 1 new E2E test cover FILT-16..FILT-19.

@@ -127,6 +127,19 @@ export function parseTickerFilterInput(raw: string): string[] {
   return normalizeTickerFilter(raw.split(','));
 }
 
+const TICKER_PATTERN = /^[a-zA-Z]{4}[0-9]{1,2}$/;
+
+// Strict validator used by the SettingsPopover save/blur flow. Empty input is
+// valid (clears the filter). Comma is the only allowed separator; every
+// non-empty piece must be a 4-letter prefix + 1-2 digit suffix. Trailing /
+// leading / repeated commas produce empty pieces and are rejected.
+// (parseTickerFilterInput remains forgiving for non-UI callers.)
+export function isValidTickerFilterFormat(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (trimmed === '') return true;
+  return trimmed.split(',').every((piece) => TICKER_PATTERN.test(piece.trim()));
+}
+
 export const useConfigStore = defineStore(
   'config',
   () => {

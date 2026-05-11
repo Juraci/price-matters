@@ -60,8 +60,19 @@ Users typically follow a small watchlist (a handful of codigos), but every CSV i
 4. WHEN the user clicks Limpar in the SettingsPopover, THEN both `brapiApiKey` (existing behavior) AND the locally-staged ticker-filter input SHALL be cleared, the persisted `configStore.tickerFilter` SHALL be set to `[]`, and any visible "not found" message SHALL be hidden.
 5. WHEN the popover/drawer is opened, THEN the input field SHALL be pre-populated with the currently-persisted filter rendered as `KLBN4, ITUB3` (joined by `", "`), so the user can edit rather than re-type.
 6. WHEN no CSV has been imported yet AND the user saves any non-empty filter, THEN the message SHALL list every codigo in the filter as not-found (since `tickerStore.tickers` is `{}`), and the filter SHALL still be persisted (P1.b AC #2 generalisation).
+7. WHEN the input value does NOT conform to the strict ticker format (each entry must match `^[a-zA-Z]{4}[0-9]{1,2}$`, separated by `,` only, no trailing/leading/repeated commas) AND the input field loses focus (`blur`), THEN the SettingsPopover SHALL display a red message `"Formato inválido"` below the field.
+8. WHEN the user clicks Salvar with format-invalid input, THEN the system SHALL NOT modify `configStore.tickerFilter` (no-op), SHALL NOT close the popover/drawer, AND SHALL display the `"Formato inválido"` message regardless of whether blur fired.
+9. WHEN the user edits the field after a format error was shown, THEN the format error message SHALL be cleared on the next `input` event (live feedback while the user fixes their typo).
+10. WHEN the user clicks Salvar with format-valid input after a prior format-invalid attempt, THEN the existing save flow SHALL proceed normally (including the missing-codigos validation in AC #1).
 
 **Independent Test**: Import `stocks-sample-v1.csv`, open SettingsPopover, enter `XXX3, ITUB3`, click Salvar. Assert a red message reading `Tickers não encontrados: XXX3` appears under the field and `ITUB3` is the only row visible in the table afterwards.
+
+**Format validation rules (strict, for AC #7-#10):**
+- Empty input (or whitespace-only) is valid — clears the filter.
+- Each entry, after trim, MUST match `^[a-zA-Z]{4}[0-9]{1,2}$` (case-insensitive; uppercased on save).
+- The ONLY allowed separator is `,`. Semicolons, spaces-as-separator, etc. are rejected.
+- Trailing/leading/repeated commas (which produce empty pieces) are rejected.
+- The `parseTickerFilterInput` helper remains forgiving (drops empty pieces, dedupes) for any non-UI callers; the strict validator is a separate gate used only by `SettingsPopover.save` and `SettingsPopover.validateFormat` (on blur).
 
 ---
 
@@ -97,6 +108,10 @@ Users typically follow a small watchlist (a handful of codigos), but every CSV i
 | FILT-13        | P1: Validate filter            | Execute | ✅ Verified |
 | FILT-14        | P1: Validate filter            | Execute | ✅ Verified |
 | FILT-15        | P1: Validate filter            | Execute | ✅ Verified (covered by Step 4 component test "shows red error..." which exercises the same code path with empty store) |
+| FILT-16        | P1: Validate filter (format)   | Execute | ✅ Verified |
+| FILT-17        | P1: Validate filter (format)   | Execute | ✅ Verified |
+| FILT-18        | P1: Validate filter (format)   | Execute | ✅ Verified |
+| FILT-19        | P1: Validate filter (format)   | Execute | ✅ Verified |
 
 **ID format:** `FILT-NN`
 **Status values:** Pending → In Tasks → Implementing → Verified

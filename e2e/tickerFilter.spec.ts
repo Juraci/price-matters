@@ -68,18 +68,64 @@ test.describe('Ticker filter', () => {
     const table = page.locator('[data-testid="stock-table"]');
 
     await page.getByTestId('settings-trigger').click();
-    await page.locator('[data-testid="settings-ticker-filter"]').fill('XXX3, ITUB3');
+    // ZZZZ3 satisfies the strict format rule (^[a-zA-Z]{4}[0-9]{1,2}$) but is
+    // absent from the imported CSV, so it exercises the missing-codigos branch.
+    await page.locator('[data-testid="settings-ticker-filter"]').fill('ZZZZ3, ITUB3');
     await page.getByTestId('settings-save').click();
 
     const error = page.getByTestId('settings-ticker-filter-error');
     await expect(error).toBeVisible();
     await expect(error).toContainText('Tickers não encontrados');
-    await expect(error).toContainText('XXX3');
+    await expect(error).toContainText('ZZZZ3');
     await expect(error).not.toContainText('ITUB3');
 
     // Best-effort save: ITUB3 is the only data row in the table.
     await expect(table.locator('tr').filter({ hasText: 'ITUB3' })).toBeVisible();
     await expect(table.locator('tr').filter({ hasText: 'KLBN4' })).toHaveCount(0);
+    await expect(table.locator('tr').filter({ hasText: 'BBSE3' })).toHaveCount(0);
+    await expect(table.locator('tr').filter({ hasText: 'LEVE3' })).toHaveCount(0);
+  });
+
+  test('typing an invalid format shows "Formato inválido" on blur and save is a no-op until the user fixes it', async ({
+    page,
+  }) => {
+    const filterInput = page.locator('[data-testid="settings-ticker-filter"]');
+
+    await page.getByTestId('settings-trigger').click();
+
+    // Type the user's example: semicolon instead of comma.
+    await filterInput.fill('KLBN4; ITUB3');
+    await filterInput.blur();
+
+    const formatError = page.getByTestId('settings-ticker-filter-format-error');
+    await expect(formatError).toBeVisible();
+    await expect(formatError).toContainText('Formato inválido');
+
+    // Clicking save with invalid format must be a no-op: no persisted filter,
+    // popover stays open with the error visible.
+    await page.getByTestId('settings-save').click();
+    await expect(formatError).toBeVisible();
+    const persisted = await page.evaluate(() => localStorage.getItem('config'));
+    expect(persisted).not.toBeNull();
+    const config = JSON.parse(persisted!);
+    expect(config.tickerFilter ?? []).toEqual([]);
+
+    // Sanity: the table is still showing every imported ticker since no filter
+    // was applied.
+    const table = page.locator('[data-testid="stock-table"]');
+    await expect(table.locator('tr').filter({ hasText: 'KLBN4' })).toBeVisible();
+    await expect(table.locator('tr').filter({ hasText: 'ITUB3' })).toBeVisible();
+    await expect(table.locator('tr').filter({ hasText: 'BBSE3' })).toBeVisible();
+    await expect(table.locator('tr').filter({ hasText: 'LEVE3' })).toBeVisible();
+
+    // Fix the format — the error message clears on the next input event.
+    await filterInput.fill('KLBN4, ITUB3');
+    await expect(formatError).toBeHidden();
+
+    // Now save succeeds — filter narrows the table.
+    await page.getByTestId('settings-save').click();
+    await expect(table.locator('tr').filter({ hasText: 'KLBN4' })).toBeVisible();
+    await expect(table.locator('tr').filter({ hasText: 'ITUB3' })).toBeVisible();
     await expect(table.locator('tr').filter({ hasText: 'BBSE3' })).toHaveCount(0);
     await expect(table.locator('tr').filter({ hasText: 'LEVE3' })).toHaveCount(0);
   });
