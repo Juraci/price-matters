@@ -45,10 +45,12 @@ test.describe('CSV Stock Import', () => {
   test('importing same CSV twice does not create duplicate snapshots', async ({ page }) => {
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
     await expect(page.getByText('sem alteração')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     const historyButtons = page.locator('[data-test-history-button]');
     await historyButtons.first().click();
@@ -62,9 +64,11 @@ test.describe('CSV Stock Import', () => {
   test('the history dialog shows diff bettwen snapshots', async ({ page }) => {
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH_V2);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await expect(page.locator('[data-test-history-button]').first()).toHaveText('2');
 
@@ -124,6 +128,7 @@ test.describe('CSV Stock Import', () => {
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
     await expect(page.getByText('ITUB3')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await page.getByTestId('reset-button').click();
 

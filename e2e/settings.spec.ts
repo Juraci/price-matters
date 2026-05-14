@@ -19,6 +19,7 @@ test.describe('Settings popover', () => {
 
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     // Mock brapi AFTER the key is configured — we only assert the call shape.
     let requested = false;

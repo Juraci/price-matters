@@ -21,6 +21,7 @@ test.describe('Ticker filter', () => {
     await expect(page.getByTestId('import-button')).toBeVisible();
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 
   test('saving "KLBN4, ITUB3" narrows the table to those rows and live-quote refresh fans out only to those codigos', async ({

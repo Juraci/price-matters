@@ -61,6 +61,7 @@ test.describe('Live quotes', () => {
     await expect(page.getByTestId('import-button')).toBeVisible();
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 
   test('clicking refresh updates Cotação cells with mocked prices', async ({ page }) => {

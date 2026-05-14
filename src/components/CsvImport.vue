@@ -4,6 +4,7 @@ import { ref, computed } from 'vue';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Message from 'primevue/message';
+import ImportDiffDialog from '@/components/ImportDiffDialog.vue';
 import { useImportStore } from '@/stores/importStore';
 import { useEmpresaStore } from '@/stores/empresaStore';
 import { useTickerStore } from '@/stores/tickerStore';
@@ -17,8 +18,20 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const importing = ref(false);
 const errorMessage = ref('');
 const lastBatch = ref<ImportBatch | null>(null);
+const diffDialogVisible = ref(false);
 
 const hasData = computed(() => importStore.batches.length > 0);
+
+const updatedCodigos = computed<string[]>(() => {
+  if (!lastBatch.value) return [];
+  const importId = lastBatch.value.id;
+  return tickerStore.allTickers
+    .filter((t) => {
+      const last = t.history[t.history.length - 1];
+      return last?.importId === importId && t.history.length >= 2;
+    })
+    .map((t) => t.codigo);
+});
 
 async function handleFileChange(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -30,6 +43,7 @@ async function handleFileChange(event: Event) {
   lastBatch.value = null;
   try {
     lastBatch.value = await importStore.importCsv(file);
+    diffDialogVisible.value = true;
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'Erro ao importar arquivo';
   } finally {
@@ -98,6 +112,11 @@ function handleReset() {
 
     <Message v-if="errorMessage" severity="error">{{ errorMessage }}</Message>
   </div>
+
+  <ImportDiffDialog
+    v-model:visible="diffDialogVisible"
+    :updated-codigos="updatedCodigos"
+  />
 </template>
 
 <style scoped>

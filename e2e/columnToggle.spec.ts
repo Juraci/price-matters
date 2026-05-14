@@ -12,6 +12,7 @@ test.describe('Stock table column toggle', () => {
     await page.reload();
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 
   test('hides a column when deselected from the toggle and persists across reload', async ({

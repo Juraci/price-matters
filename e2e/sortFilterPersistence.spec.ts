@@ -12,6 +12,7 @@ test.describe('Stock table sort & filter persistence', () => {
     await page.reload();
     await page.locator('[data-test-upload-csv]').setInputFiles(CSV_PATH);
     await expect(page.getByTestId('import-success')).toBeVisible();
+    await page.keyboard.press('Escape');
   });
 
   test('clicking a sortable header persists sort across reload', async ({ page }) => {
