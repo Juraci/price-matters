@@ -113,10 +113,7 @@ function handleReset() {
     <Message v-if="errorMessage" severity="error">{{ errorMessage }}</Message>
   </div>
 
-  <ImportDiffDialog
-    v-model:visible="diffDialogVisible"
-    :updated-codigos="updatedCodigos"
-  />
+  <ImportDiffDialog v-model:visible="diffDialogVisible" :updated-codigos="updatedCodigos" />
 </template>
 
 <style scoped>

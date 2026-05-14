@@ -91,8 +91,18 @@ describe('ImportDiffDialog', () => {
     const store = useTickerStore();
     store.upsertTicker('ITUB3', 'Itaú', makeSnapshot({ importId: 'i1', precoTeto: 30 }), 25);
     store.upsertTicker('ITUB3', 'Itaú', makeSnapshot({ importId: 'i2', precoTeto: 31 }), 25);
-    store.upsertTicker('KLBN4', 'Klabin', makeSnapshot({ importId: 'i1', cagrLucros5Anos: 10 }), 15);
-    store.upsertTicker('KLBN4', 'Klabin', makeSnapshot({ importId: 'i2', cagrLucros5Anos: 12 }), 15);
+    store.upsertTicker(
+      'KLBN4',
+      'Klabin',
+      makeSnapshot({ importId: 'i1', cagrLucros5Anos: 10 }),
+      15,
+    );
+    store.upsertTicker(
+      'KLBN4',
+      'Klabin',
+      makeSnapshot({ importId: 'i2', cagrLucros5Anos: 12 }),
+      15,
+    );
 
     mountDialog({ visible: true, updatedCodigos: ['ITUB3', 'KLBN4'] });
     await new Promise((r) => setTimeout(r, 0));
@@ -138,8 +148,18 @@ describe('ImportDiffDialog', () => {
 
   it('applies bad tone and ↑ arrow for an unfavorable increase (dividaLiquidaEbitda up)', async () => {
     const store = useTickerStore();
-    store.upsertTicker('ITUB3', 'Itaú', makeSnapshot({ importId: 'i1', dividaLiquidaEbitda: 2 }), 25);
-    store.upsertTicker('ITUB3', 'Itaú', makeSnapshot({ importId: 'i2', dividaLiquidaEbitda: 3 }), 25);
+    store.upsertTicker(
+      'ITUB3',
+      'Itaú',
+      makeSnapshot({ importId: 'i1', dividaLiquidaEbitda: 2 }),
+      25,
+    );
+    store.upsertTicker(
+      'ITUB3',
+      'Itaú',
+      makeSnapshot({ importId: 'i2', dividaLiquidaEbitda: 3 }),
+      25,
+    );
 
     mountDialog({ visible: true, updatedCodigos: ['ITUB3'] });
     await new Promise((r) => setTimeout(r, 0));
@@ -155,8 +175,18 @@ describe('ImportDiffDialog', () => {
 
   it('applies good tone and ↓ arrow for a favorable decrease (dividaLiquidaEbitda down)', async () => {
     const store = useTickerStore();
-    store.upsertTicker('ITUB3', 'Itaú', makeSnapshot({ importId: 'i1', dividaLiquidaEbitda: 3 }), 25);
-    store.upsertTicker('ITUB3', 'Itaú', makeSnapshot({ importId: 'i2', dividaLiquidaEbitda: 2 }), 25);
+    store.upsertTicker(
+      'ITUB3',
+      'Itaú',
+      makeSnapshot({ importId: 'i1', dividaLiquidaEbitda: 3 }),
+      25,
+    );
+    store.upsertTicker(
+      'ITUB3',
+      'Itaú',
+      makeSnapshot({ importId: 'i2', dividaLiquidaEbitda: 2 }),
+      25,
+    );
 
     mountDialog({ visible: true, updatedCodigos: ['ITUB3'] });
     await new Promise((r) => setTimeout(r, 0));
@@ -172,8 +202,18 @@ describe('ImportDiffDialog', () => {
 
   it('applies bad tone and ↓ arrow for an unfavorable decrease (cagrLucros5Anos down)', async () => {
     const store = useTickerStore();
-    store.upsertTicker('KLBN4', 'Klabin', makeSnapshot({ importId: 'i1', cagrLucros5Anos: 12 }), 15);
-    store.upsertTicker('KLBN4', 'Klabin', makeSnapshot({ importId: 'i2', cagrLucros5Anos: 10 }), 15);
+    store.upsertTicker(
+      'KLBN4',
+      'Klabin',
+      makeSnapshot({ importId: 'i1', cagrLucros5Anos: 12 }),
+      15,
+    );
+    store.upsertTicker(
+      'KLBN4',
+      'Klabin',
+      makeSnapshot({ importId: 'i2', cagrLucros5Anos: 10 }),
+      15,
+    );
 
     mountDialog({ visible: true, updatedCodigos: ['KLBN4'] });
     await new Promise((r) => setTimeout(r, 0));

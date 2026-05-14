@@ -83,8 +83,7 @@ const tickerDiffs = computed<TickerDiff[]>(() =>
         const direction = newNum > oldNum ? 'up' : newNum < oldNum ? 'down' : 'flat';
         let tone: DiffRow['tone'] = 'neutral';
         if (goodDir && direction !== 'flat') tone = direction === goodDir ? 'good' : 'bad';
-        const arrow: DiffRow['arrow'] =
-          direction === 'up' ? '↑' : direction === 'down' ? '↓' : '';
+        const arrow: DiffRow['arrow'] = direction === 'up' ? '↑' : direction === 'down' ? '↓' : '';
         return {
           field,
           label: FIELD_LABELS[field] ?? field,
