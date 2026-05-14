@@ -1,5 +1,5 @@
 // src/components/__tests__/CsvImport.spec.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import PrimeVue from 'primevue/config';
@@ -7,17 +7,22 @@ import Aura from '@primeuix/themes/aura';
 import CsvImport from '../CsvImport.vue';
 import { useImportStore } from '@/stores/importStore';
 
-function mountComponent() {
+function mountComponent(attachToBody = false) {
   return mount(CsvImport, {
     global: {
       plugins: [createPinia(), [PrimeVue, { theme: { preset: Aura } }]],
     },
+    ...(attachToBody ? { attachTo: document.body } : {}),
   });
 }
 
 describe('CsvImport', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
   });
 
   it('renders the import button', () => {
@@ -61,6 +66,53 @@ describe('CsvImport', () => {
     });
     await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-testid="reset-button"]').exists()).toBe(true);
+  });
+
+  it('does not show view-latest-import button when no data has been imported', () => {
+    const wrapper = mountComponent();
+    expect(wrapper.find('[data-testid="view-latest-import-button"]').exists()).toBe(false);
+  });
+
+  it('shows view-latest-import button when import store has batches', async () => {
+    const wrapper = mountComponent();
+    const importStore = useImportStore();
+    importStore.batches.push({
+      id: 'b1',
+      filename: 'test.csv',
+      importedAt: '2026-01-01T00:00:00.000Z',
+      rowCount: 3,
+      stats: {
+        newEmpresas: 1,
+        newTickers: 3,
+        updatedTickers: 0,
+        removedTickers: 0,
+        unchangedTickers: 0,
+      },
+    });
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-testid="view-latest-import-button"]').exists()).toBe(true);
+  });
+
+  it('opens the diff dialog when view-latest-import button is clicked', async () => {
+    const wrapper = mountComponent(true);
+    const importStore = useImportStore();
+    importStore.batches.push({
+      id: 'b1',
+      filename: 'test.csv',
+      importedAt: '2026-01-01T00:00:00.000Z',
+      rowCount: 3,
+      stats: {
+        newEmpresas: 1,
+        newTickers: 3,
+        updatedTickers: 0,
+        removedTickers: 0,
+        unchangedTickers: 0,
+      },
+    });
+    await wrapper.vm.$nextTick();
+    await wrapper.find('[data-testid="view-latest-import-button"]').trigger('click');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelector('[data-testid="import-diff-dialog"]')).not.toBeNull();
   });
 
   it('shows error message when errorMessage is set', async () => {

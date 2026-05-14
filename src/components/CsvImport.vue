@@ -22,6 +22,10 @@ const diffDialogVisible = ref(false);
 
 const hasData = computed(() => importStore.batches.length > 0);
 
+const latestBatch = computed<ImportBatch | null>(() =>
+  importStore.batches.length > 0 ? importStore.batches[importStore.batches.length - 1]! : null,
+);
+
 const updatedCodigos = computed<string[]>(() => {
   if (!lastBatch.value) return [];
   const importId = lastBatch.value.id;
@@ -52,6 +56,11 @@ async function handleFileChange(event: Event) {
   }
 }
 
+function handleViewLatestImport() {
+  lastBatch.value = latestBatch.value;
+  diffDialogVisible.value = true;
+}
+
 function handleReset() {
   importStore.reset();
   empresaStore.reset();
@@ -77,6 +86,15 @@ function handleReset() {
         icon="pi pi-upload"
         :loading="importing"
         @click="fileInputRef?.click()"
+      />
+      <Button
+        v-if="hasData"
+        data-testid="view-latest-import-button"
+        label="Ver última importação"
+        icon="pi pi-history"
+        severity="secondary"
+        outlined
+        @click="handleViewLatestImport"
       />
       <Button
         v-if="hasData"
